@@ -49,9 +49,4 @@ npm run build
 ```bash
 npm run deploy
 ```
-
----
-
-## Repositorio
-
-[github.com/estebanzen/progression-finder](https://github.com/estebanzen/progression-finder)
+ 

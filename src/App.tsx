@@ -10,6 +10,7 @@ import { usePersistentPanelState } from './hooks/usePersistentPanelState';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import './App.css';
 
+const BASE_URL = import.meta.env.BASE_URL;
 // Pitch class map to calculate intervals
 const noteToSemits: Record<string, number> = {
   'C': 0, 'C#': 1, 'Db': 1,
@@ -129,12 +130,11 @@ const PRESETS = [
 ];
 
 const INSTRUMENTS = [
-  { id: 'piano', name: 'Grand Piano', icon: '🎹', desc: 'Acústico, cálido y brillante', baseUrl: '/samples/piano/' },
-  { id: 'rhodes', name: 'Rhodes', icon: '🎸', desc: 'Eléctrico suave — soul, jazz, funk', baseUrl: '/samples/rhodes/' },
-  { id: 'wurlitzer', name: 'Wurlitzer', icon: '🎷', desc: 'Carácter vintage y agresivo', baseUrl: '/samples/wurlitzer/' },
-  { id: 'clavinet', name: 'Clavinet', icon: '🥁', desc: 'Percusivo, funk y disco', baseUrl: '/samples/clavinet/' },
-  { id: 'nylon-guitar', name: 'Nylon Guitar', icon: '🎸', desc: 'Guitarra acústica, ataque suave', baseUrl: '/samples/nylon-guitar/' },
-  { id: 'jazz-guitar', name: 'Jazz Guitar', icon: '🎼', desc: 'Eléctrica limpia, acordes de jazz', baseUrl: '/samples/jazz-guitar/' }
+  { id: 'piano', name: 'Grand Piano', icon: '🎹', desc: 'Acústico, cálido y brillante', baseUrl: `${BASE_URL}/samples/piano/` },
+  { id: 'rhodes', name: 'Rhodes', icon: '🎹', desc: 'Eléctrico suave — soul, jazz, funk', baseUrl: `${BASE_URL}/samples/rhodes/` },
+  { id: 'wurlitzer', name: 'Electric Organ', icon: '🎹', desc: 'Carácter vintage y agresivo', baseUrl: `${BASE_URL}/samples/wurlitzer/` },
+  { id: 'clavinet', name: 'Clavinet', icon: '🥁', desc: 'Percusivo, funk y disco', baseUrl: `${BASE_URL}/samples/clavinet/` },
+  { id: 'nylon-guitar', name: 'Nylon Guitar', icon: '🎸', desc: 'Guitarra acústica, ataque suave', baseUrl: `${BASE_URL}/samples/nylon-guitar/` },
 ] as const;
 
 type InstrumentType = typeof INSTRUMENTS[number]['id'];
@@ -158,7 +158,7 @@ function App() {
   const [selectedChord, setSelectedChord] = useState<ChordInfo | null>(null);
   const [audioState, setAudioState] = useState(false);
   const [playMode, setPlayMode] = useLocalStorage<PlayMode>('progressionFinder_playMode', 'chord');
-  
+
   const [chordType, setChordType] = useLocalStorage('progressionFinder_chordType', 'triads');
   const showSevenths = chordType === 'sevenths';
   const setShowSevenths = (val: boolean) => setChordType(val ? 'sevenths' : 'triads');
@@ -219,7 +219,7 @@ function App() {
 
   const [instrumentLoading, setInstrumentLoading] = useState<boolean>(true);
   const [instrumentError, setInstrumentError] = useState<string | null>(null);
-  const [volume, setVolume] = useState<number>(80);
+  const [volume, setVolume] = useState<number>(100);
   const [manuallyPressedKeys, setManuallyPressedKeys] = useState<Record<string, boolean>>({});
 
   const samplersRef = useRef<Record<string, Tone.Sampler | null>>({
@@ -944,6 +944,72 @@ function App() {
                 </div>
               </div>
             </CollapsiblePanel>
+            {/* Guitar View */}
+            <CollapsiblePanel
+              title="Guitarra Interactiva"
+              compactMode={compactMode}
+              isOpen={panelGuitarOpen}
+              onToggle={setPanelGuitarOpen}
+            >
+              {(() => {
+                const suffixMatch = explorationChord.name.match(/^[A-G](#|b)?(.*)$/);
+                const suffix = suffixMatch ? suffixMatch[2] : '';
+                const positions = getGuitarPositions(explorationChord.root, suffix, explorationChord.isSeventhChord || false);
+                const currentPosIdx = selectedPositionIdx < positions.length ? selectedPositionIdx : 0;
+
+                return positions.length > 0 ? (
+                  <div className="guitar-view-container" style={{ marginTop: '0.5rem', background: 'transparent', padding: 0, border: 'none' }}>
+                    <div className="guitar-header-controls" style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="position-selector">
+                        {positions.map((_, idx) => (
+                          <button
+                            key={idx}
+                            className={`pos-btn ${currentPosIdx === idx ? 'active' : ''}`}
+                            style={{ width: '24px', height: '24px', fontSize: '0.75rem' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPositionIdx(idx);
+                              const voicing = getGuitarVoicing(positions[idx]);
+                              playGuitarVoicing(voicing);
+                            }}
+                            aria-label={`Posición ${idx + 1}`}
+                          >
+                            {idx + 1}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <GuitarDiagram
+                      position={positions[currentPosIdx]}
+                      chordName={explorationChord.name}
+                    />
+
+                    <div className="export-controls" style={{ display: 'flex', gap: '0.5rem' }}>
+                      <p>Esportar acordes:</p>
+                      <button
+                        className="global-btn"
+                        style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                        onClick={() => exportChordDiagram(explorationChord.name, positions[currentPosIdx], currentPosIdx, 'transparent')}
+                        title="Exportar Transparente (PNG)"
+                      >
+                        Exportar Transparente (PNG)
+                      </button>
+                      <button
+                        className="global-btn"
+                        style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                        onClick={() => exportChordDiagram(explorationChord.name, positions[currentPosIdx], currentPosIdx, 'bw')}
+                        title="Exportar Blanco y Negro (PNG)"
+                      >
+                        Exportar Blanco y Negro (PNG)
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-muted text-sm mt-2" style={{ padding: '1rem' }}>Diagrama no disponible</div>
+                );
+              })()}
+            </CollapsiblePanel>
+
 
             {/* Piano Keyboard Visualizer */}
             <CollapsiblePanel
@@ -998,70 +1064,6 @@ function App() {
               </div>
             </CollapsiblePanel>
 
-            {/* Guitar View */}
-            <CollapsiblePanel
-              title="Guitarra Interactiva"
-              compactMode={compactMode}
-              isOpen={panelGuitarOpen}
-              onToggle={setPanelGuitarOpen}
-            >
-              {(() => {
-                const suffixMatch = explorationChord.name.match(/^[A-G](#|b)?(.*)$/);
-                const suffix = suffixMatch ? suffixMatch[2] : '';
-                const positions = getGuitarPositions(explorationChord.root, suffix, explorationChord.isSeventhChord || false);
-                const currentPosIdx = selectedPositionIdx < positions.length ? selectedPositionIdx : 0;
-
-                return positions.length > 0 ? (
-                  <div className="guitar-view-container" style={{ marginTop: '0.5rem', background: 'transparent', padding: 0, border: 'none' }}>
-                    <div className="guitar-header-controls" style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div className="position-selector">
-                        {positions.map((_, idx) => (
-                          <button
-                            key={idx}
-                            className={`pos-btn ${currentPosIdx === idx ? 'active' : ''}`}
-                            style={{ width: '24px', height: '24px', fontSize: '0.75rem' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedPositionIdx(idx);
-                              const voicing = getGuitarVoicing(positions[idx]);
-                              playGuitarVoicing(voicing);
-                            }}
-                            aria-label={`Posición ${idx + 1}`}
-                          >
-                            {idx + 1}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="export-controls" style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          className="global-btn"
-                          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                          onClick={() => exportChordDiagram(explorationChord.name, positions[currentPosIdx], currentPosIdx, 'transparent')}
-                          title="Exportar Transparente (PNG)"
-                        >
-                          PNG Transp
-                        </button>
-                        <button
-                          className="global-btn"
-                          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                          onClick={() => exportChordDiagram(explorationChord.name, positions[currentPosIdx], currentPosIdx, 'bw')}
-                          title="Exportar Blanco y Negro (PNG)"
-                        >
-                          PNG B/N
-                        </button>
-                      </div>
-                    </div>
-                    <GuitarDiagram
-                      position={positions[currentPosIdx]}
-                      chordName={explorationChord.name}
-                    />
-                  </div>
-                ) : (
-                  <div className="text-muted text-sm mt-2" style={{ padding: '1rem' }}>Diagrama no disponible</div>
-                );
-              })()}
-            </CollapsiblePanel>
-
             {/* Transposition */}
             <CollapsiblePanel
               title="Transposición"
@@ -1107,6 +1109,13 @@ function App() {
         </div>
         <div>
           Desarrollado con React, TypeScript y Tone.js para una experiencia auditiva interactiva.
+        </div>
+        <div>
+
+
+          Autor Esteban Zen, repositorio <a target='_blank' href="https://github.com/estebanzen/progression-finder">
+            https://github.com/estebanzen/progression-finder
+          </a>
         </div>
       </footer>
     </div>
