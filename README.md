@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# 🎵 Progression Finder
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Herramienta interactiva para construir, analizar y reproducir progresiones de acordes diatónicas en tiempo real, usando cifrado americano.
 
-Currently, two official plugins are available:
+**[🚀 Ver demo en vivo →](https://estebanzen.github.io/Progression-Finder/)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Características
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 🎹 Análisis diatónico de tríadas y acordes de séptima
+- 🎸 Diagramas de guitarra con posiciones hasta el traste 21
+- 🎶 Modos de reproducción: **Chord** (bloque) y **Arpeggio** (secuencial)
+- 🎛️ Selector de instrumento: Piano, Rhodes, Wurlitzer, Clavinet, Nylon Guitar, Jazz Guitar
+- 🔊 Samples de audio locales (sin dependencias externas, funciona offline)
+- 💾 Configuración persistente en `localStorage`
+- 📤 Exportar diagramas de guitarra como imagen
+- 📱 Diseño responsive con modo compacto
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Tecnología | Uso |
+|---|---|
+| [React 19](https://react.dev/) | UI framework |
+| [TypeScript](https://www.typescriptlang.org/) | Tipado estático |
+| [Vite](https://vite.dev/) | Bundler y dev server |
+| [Tone.js](https://tonejs.github.io/) | Motor de audio |
+| [Lucide React](https://lucide.dev/) | Iconos |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Desarrollo local
+
+```bash
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
+npm run dev
+
+# Build de producción
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Publicar en GitHub Pages
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run deploy
 ```
+
+---
+
+## Repositorio
+
+[github.com/estebanzen/Progression-Finder](https://github.com/estebanzen/Progression-Finder)
