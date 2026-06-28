@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
-import { Music, Play, Volume2, VolumeX, Info, Sparkles, Loader2, Maximize2, Minimize2, List, Grid } from 'lucide-react';
+import { Music, Play, Volume2, VolumeX, Info, Sparkles, Loader2, Maximize2, Minimize2, List } from 'lucide-react';
 import { ChordCard } from './components/ChordCard';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
 import { GuitarDiagram } from './components/GuitarDiagram';

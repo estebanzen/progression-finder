@@ -2,7 +2,7 @@
 
 Herramienta interactiva para construir, analizar y reproducir progresiones de acordes diatónicas en tiempo real, usando cifrado americano.
 
-**[🚀 Ver demo en vivo →](https://estebanzen.github.io/Progression-Finder/)**
+**[🚀 Ver demo en vivo →](https://estebanzen.github.io/progression-finder/)**
 
 ---
 
@@ -54,4 +54,4 @@ npm run deploy
 
 ## Repositorio
 
-[github.com/estebanzen/Progression-Finder](https://github.com/estebanzen/Progression-Finder)
+[github.com/estebanzen/progression-finder](https://github.com/estebanzen/progression-finder)
