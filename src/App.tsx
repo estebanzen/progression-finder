@@ -129,33 +129,22 @@ const PRESETS = [
 ];
 
 const INSTRUMENTS = [
-  { id: 'piano', name: 'Grand Piano', icon: '🎹', desc: 'Acústico, cálido y brillante', baseUrl: 'https://tonejs.github.io/audio/salamander/' },
-  { id: 'rhodes', name: 'Rhodes', icon: '🎸', desc: 'Eléctrico suave — soul, jazz, funk', baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_piano_1-mp3/' },
-  { id: 'wurlitzer', name: 'Wurlitzer', icon: '🎷', desc: 'Carácter vintage y agresivo', baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_piano_2-mp3/' },
-  { id: 'clavinet', name: 'Clavinet', icon: '🥁', desc: 'Percusivo, funk y disco', baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/clavinet-mp3/' },
-  { id: 'nylon-guitar', name: 'Nylon Guitar', icon: '🎸', desc: 'Guitarra acústica, ataque suave', baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/acoustic_guitar_nylon-mp3/' },
-  { id: 'jazz-guitar', name: 'Jazz Guitar', icon: '🎼', desc: 'Eléctrica limpia, acordes de jazz', baseUrl: 'https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/electric_guitar_jazz-mp3/' }
+  { id: 'piano', name: 'Grand Piano', icon: '🎹', desc: 'Acústico, cálido y brillante', baseUrl: '/samples/piano/' },
+  { id: 'rhodes', name: 'Rhodes', icon: '🎸', desc: 'Eléctrico suave — soul, jazz, funk', baseUrl: '/samples/rhodes/' },
+  { id: 'wurlitzer', name: 'Wurlitzer', icon: '🎷', desc: 'Carácter vintage y agresivo', baseUrl: '/samples/wurlitzer/' },
+  { id: 'clavinet', name: 'Clavinet', icon: '🥁', desc: 'Percusivo, funk y disco', baseUrl: '/samples/clavinet/' },
+  { id: 'nylon-guitar', name: 'Nylon Guitar', icon: '🎸', desc: 'Guitarra acústica, ataque suave', baseUrl: '/samples/nylon-guitar/' },
+  { id: 'jazz-guitar', name: 'Jazz Guitar', icon: '🎼', desc: 'Eléctrica limpia, acordes de jazz', baseUrl: '/samples/jazz-guitar/' }
 ] as const;
 
 type InstrumentType = typeof INSTRUMENTS[number]['id'];
 
 const SAMPLER_URLS = {
+  "C2": "C2.mp3",
   "C3": "C3.mp3",
-  "D#3": "Ds3.mp3",
-  "F#3": "Fs3.mp3",
-  "A3": "A3.mp3",
   "C4": "C4.mp3",
-  "D#4": "Ds4.mp3",
-  "F#4": "Fs4.mp3",
-  "A4": "A4.mp3",
   "C5": "C5.mp3",
-  "D#5": "Ds5.mp3",
-  "F#5": "Fs5.mp3",
-  "A5": "A5.mp3",
-  "C6": "C6.mp3",
-  "D#6": "Ds6.mp3",
-  "F#6": "Fs6.mp3",
-  "A6": "A6.mp3"
+  "C6": "C6.mp3"
 };
 
 function App() {
@@ -259,10 +248,16 @@ function App() {
     const config = INSTRUMENTS.find(i => i.id === instType);
     if (!config) return;
 
+    console.log(`Loading instrument: ${config.name}`);
+    Object.values(SAMPLER_URLS).forEach(url => {
+      console.log(`Loading sample: ${url}`);
+    });
+
     const sampler = new Tone.Sampler({
       urls: SAMPLER_URLS,
       baseUrl: config.baseUrl,
       onload: () => {
+        console.log(`Instrument loaded successfully: ${config.name}`);
         samplersRef.current[instType] = sampler;
         sampler.connect(getLimiter());
         sampler.set({ release: 1.6, volume: -5 });
@@ -271,7 +266,7 @@ function App() {
         }
       },
       onerror: (err) => {
-        console.error(`Error loading instrument ${instType}:`, err);
+        console.error(`Sampler initialization failed for ${config.name}:`, err);
         setInstrumentError(`No se pudo cargar "${config.name}". Volviendo a Grand Piano.`);
         // Fallback to piano
         if (instType !== 'piano') {
