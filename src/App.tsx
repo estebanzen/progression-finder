@@ -147,6 +147,8 @@ const SAMPLER_URLS = {
   "C6": "C6.mp3"
 };
 
+type PlayMode = 'chord' | 'arpeggio';
+
 function App() {
   const [rawInput, setRawInput] = useState(() => {
     return localStorage.getItem('current_scale_notes') || 'C D E F G A B';
@@ -155,6 +157,7 @@ function App() {
   const [chords, setChords] = useState<ChordInfo[]>([]);
   const [selectedChord, setSelectedChord] = useState<ChordInfo | null>(null);
   const [audioState, setAudioState] = useState(false);
+  const [playMode, setPlayMode] = useLocalStorage<PlayMode>('progressionFinder_playMode', 'chord');
   
   const [chordType, setChordType] = useLocalStorage('progressionFinder_chordType', 'triads');
   const showSevenths = chordType === 'sevenths';
@@ -436,21 +439,30 @@ function App() {
     setSelectedChord(chordToSelect);
   }, [parsedNotes, showSevenths]);
 
+  // Internal helper: triggers notes as chord or arpeggio depending on playMode
+  const triggerNotes = async (notes: string[]) => {
+    if (Tone.context.state !== 'running') await Tone.start();
+    setAudioState(true);
+    const sampler = samplersRef.current[activeInstrumentRef.current];
+    if (!sampler) return;
+    sampler.releaseAll();
+    if (playMode === 'arpeggio') {
+      const now = Tone.now();
+      notes.forEach((note, i) => {
+        sampler.triggerAttackRelease(note, 1.8, now + i * 0.13);
+      });
+    } else {
+      sampler.triggerAttackRelease(notes, 1.8);
+    }
+  };
+
   // Handle chord play — voiced notes are computed fresh from current baseOctave
   const handlePlayChord = async (chord: ChordInfo, octaveOverride?: number) => {
     setSelectedChord(chord);
     const oct = octaveOverride ?? baseOctave;
     const voiced = getVoicedNotesForChord(chord, oct);
     try {
-      if (Tone.context.state !== 'running') {
-        await Tone.start();
-      }
-      setAudioState(true);
-      const sampler = samplersRef.current[activeInstrumentRef.current];
-      if (sampler) {
-        sampler.releaseAll();
-        sampler.triggerAttackRelease(voiced, 1.8);
-      }
+      await triggerNotes(voiced);
     } catch (e) {
       console.warn('Playback failed:', e);
     }
@@ -458,15 +470,7 @@ function App() {
 
   const playGuitarVoicing = async (notes: string[]) => {
     try {
-      if (Tone.context.state !== 'running') {
-        await Tone.start();
-      }
-      setAudioState(true);
-      const sampler = samplersRef.current[activeInstrumentRef.current];
-      if (sampler) {
-        sampler.releaseAll();
-        sampler.triggerAttackRelease(notes, 1.8);
-      }
+      await triggerNotes(notes);
     } catch (e) {
       console.warn('Playback failed:', e);
     }
@@ -717,6 +721,32 @@ function App() {
                   </button>
                 );
               })}
+            </div>
+          </div>
+          <div className="control-group" style={{ minWidth: 0 }}>
+            <h3>Modo de Reproducción</h3>
+            <div style={{ display: 'flex', gap: '4px', background: 'rgba(0,0,0,0.25)', padding: '4px', borderRadius: '8px', width: 'fit-content' }}>
+              {(['chord', 'arpeggio'] as PlayMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  id={`playmode-${mode}`}
+                  onClick={() => setPlayMode(mode)}
+                  aria-pressed={playMode === mode}
+                  style={{
+                    padding: '0.35rem 1rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    fontSize: '0.85rem',
+                    transition: 'all 0.18s',
+                    background: playMode === mode ? 'var(--accent-purple, #9333ea)' : 'transparent',
+                    color: playMode === mode ? '#fff' : 'var(--text-secondary, #a1a1aa)',
+                  }}
+                >
+                  {mode === 'chord' ? '⏹ Chord' : '🎶 Arpeggio'}
+                </button>
+              ))}
             </div>
           </div>
           <div className="control-group volume-group">
