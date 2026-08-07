@@ -258,8 +258,11 @@ type PlayMode = "chord" | "arpeggio";
 
 function App() {
   const [rawInput, setRawInput] = useState(() => {
+    const queryNotes = new URLSearchParams(window.location.search).get("notes");
+    if (queryNotes?.trim()) return queryNotes;
     return localStorage.getItem("current_scale_notes") || "C D E F G A B";
   });
+  const scaleQueryReadyRef = useRef(false);
   const [parsedNotes, setParsedNotes] = useState<string[]>([]);
   const [chords, setChords] = useState<ChordInfo[]>([]);
   const [selectedChord, setSelectedChord] = useState<ChordInfo | null>(null);
@@ -285,6 +288,20 @@ function App() {
   useEffect(() => {
     localStorage.setItem("current_scale_notes", rawInput);
   }, [rawInput]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const queryNotes = new URLSearchParams(window.location.search).get("notes");
+      setRawInput(
+        queryNotes?.trim() ||
+          localStorage.getItem("current_scale_notes") ||
+          "C D E F G A B",
+      );
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("selected_octave", baseOctave.toString());
@@ -467,8 +484,21 @@ function App() {
         validNotes.push(normalized);
       }
     });
+    scaleQueryReadyRef.current = true;
     setParsedNotes(validNotes);
   }, [rawInput]);
+
+  useEffect(() => {
+    if (!scaleQueryReadyRef.current) return;
+
+    const url = new URL(window.location.href);
+    if (parsedNotes.length > 0) {
+      url.searchParams.set("notes", parsedNotes.join(","));
+    } else {
+      url.searchParams.delete("notes");
+    }
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [parsedNotes]);
 
   // Build diatonic triads or seventh chords when parsed notes or mode changes
   useEffect(() => {
