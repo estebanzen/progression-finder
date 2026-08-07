@@ -1044,7 +1044,7 @@ function App() {
         >
           {/* Chords List */}
           <CollapsiblePanel
-            title="Acordes Diatónicos"
+            title="Acordes de la Escala"
             icon={<List size={20} className="text-purple-400" />}
             compactMode={compactMode}
             isOpen={panelChordsOpen}
@@ -1104,10 +1104,11 @@ function App() {
             )}
           </CollapsiblePanel>
 
-          {/* Details and following panels */}
+          {/* Chord visualizers */}
           {explorationChord ? (
             <>
-              <CollapsiblePanel
+              {false && (
+                <CollapsiblePanel
                 title="Detalles del Acorde"
                 icon={<Music size={20} className="text-purple-400" />}
                 compactMode={compactMode}
@@ -1213,7 +1214,8 @@ function App() {
                     </div>
                   </div>
                 </div>
-              </CollapsiblePanel>
+                </CollapsiblePanel>
+              )}
               {/* Guitar View */}
               <CollapsiblePanel
                 title="Guitarra Interactiva"
@@ -1393,7 +1395,8 @@ function App() {
 
             </>
           ) : (
-            <CollapsiblePanel
+            false && (
+              <CollapsiblePanel
               title="Detalles del Acorde"
               icon={<Music size={20} className="text-purple-400" />}
               compactMode={compactMode}
@@ -1415,7 +1418,8 @@ function App() {
                   reproducirlo y visualizarlo en el piano.
                 </p>
               </div>
-            </CollapsiblePanel>
+              </CollapsiblePanel>
+            )
           )}
         </div>
 
