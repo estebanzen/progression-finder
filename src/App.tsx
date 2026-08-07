@@ -1107,7 +1107,7 @@ function App() {
           {/* Chord visualizers */}
           {explorationChord ? (
             <>
-              {false && (
+              {explorationChord && false && (
                 <CollapsiblePanel
                 title="Detalles del Acorde"
                 icon={<Music size={20} className="text-purple-400" />}
@@ -1136,19 +1136,19 @@ function App() {
                     <div className="detail-header">
                       <div className="detail-title">
                         <div className="detail-chord-name">
-                          {explorationChord.name}
+                          {explorationChord!.name}
                         </div>
                         <div className="detail-chord-type">
-                          {explorationChord.isSeventhChord
+                          {explorationChord!.isSeventhChord
                             ? "Séptima"
                             : "Tríada"}{" "}
-                          {explorationChord.type === "halfdiminished"
+                          {explorationChord!.type === "halfdiminished"
                             ? "Half-Diminished"
-                            : explorationChord.type === "dominant"
+                            : explorationChord!.type === "dominant"
                               ? "Dominante"
-                              : explorationChord.type === "unknown"
+                              : explorationChord!.type === "unknown"
                                 ? "No estándar"
-                                : explorationChord.type}
+                                : explorationChord!.type}
                         </div>
                       </div>
                       <button
@@ -1162,32 +1162,32 @@ function App() {
 
                     {/* Intervals Breakdown */}
                     <div
-                      className={`notes-breakdown ${explorationChord.isSeventhChord ? "four-notes" : ""}`}
+                      className={`notes-breakdown ${explorationChord!.isSeventhChord ? "four-notes" : ""}`}
                     >
                       <div className="breakdown-card">
                         <div className="breakdown-label">Tónica</div>
                         <div className="breakdown-value">
-                          {explorationChord.root}
+                          {explorationChord!.root}
                         </div>
                       </div>
                       <div className="breakdown-card">
                         <div className="breakdown-label">Tercera</div>
                         <div className="breakdown-value">
-                          {explorationChord.third}
+                          {explorationChord!.third}
                         </div>
                       </div>
                       <div className="breakdown-card">
                         <div className="breakdown-label">Quinta</div>
                         <div className="breakdown-value">
-                          {explorationChord.fifth}
+                          {explorationChord!.fifth}
                         </div>
                       </div>
-                      {explorationChord.isSeventhChord &&
-                        explorationChord.seventh && (
+                      {explorationChord!.isSeventhChord &&
+                        explorationChord!.seventh && (
                           <div className="breakdown-card">
                             <div className="breakdown-label">Séptima</div>
                             <div className="breakdown-value">
-                              {explorationChord.seventh}
+                              {explorationChord!.seventh}
                             </div>
                           </div>
                         )}
