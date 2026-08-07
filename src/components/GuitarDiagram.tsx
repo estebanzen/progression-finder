@@ -1,6 +1,70 @@
 import React from 'react';
 import type { ChordPosition } from '../utils/guitarChords';
 
+const OPEN_STRING_NOTES = [4, 11, 7, 2, 9, 4]; // e, B, G, D, A, E
+const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
+
+interface ScaleFretboardProps {
+  notes: string[];
+  fretCount?: number;
+}
+
+const noteToPitchClass = (note: string): number | null => {
+  const match = note.match(/^([A-G])(#|b)?$/);
+  if (!match) return null;
+
+  const naturalNotes: Record<string, number> = {
+    C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11,
+  };
+  const accidental = match[2] === '#' ? 1 : match[2] === 'b' ? -1 : 0;
+  return (naturalNotes[match[1]] + accidental + 12) % 12;
+};
+
+export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
+  notes,
+  fretCount = 15,
+}) => {
+  const selectedPitchClasses = new Set(
+    notes.map(noteToPitchClass).filter((note): note is number => note !== null),
+  );
+
+  return (
+    <div className="scale-fretboard-section">
+      <div className="scale-fretboard-title">Escala en el diapasón</div>
+      <div className="scale-fretboard-scroll">
+        <div
+          className="scale-fretboard"
+          style={{ '--fret-count': fretCount } as React.CSSProperties}
+          aria-label={`Diapasón con las notas ${notes.join(', ')}`}
+        >
+          <div className="scale-string-labels" aria-hidden="true">
+            {STRING_NAMES.map((name, stringIndex) => (
+              <span key={`${name}-${stringIndex}`}>{name}</span>
+            ))}
+          </div>
+          <div className="scale-fret-grid">
+            {OPEN_STRING_NOTES.map((openNote, stringIndex) => (
+              <div className="scale-string" key={stringIndex}>
+                {Array.from({ length: fretCount + 1 }, (_, fret) => {
+                  const isSelected = selectedPitchClasses.has((openNote + fret) % 12);
+                  return (
+                    <div
+                      className={`scale-fret ${fret === 0 ? 'open-fret' : ''}`}
+                      key={fret}
+                    >
+                      {isSelected && <span className="scale-note-dot" />}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface GuitarDiagramProps {
   position: ChordPosition;
   chordName: string;

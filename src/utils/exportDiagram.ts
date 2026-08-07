@@ -159,3 +159,89 @@ export const exportChordDiagram = (
   link.href = canvas.toDataURL('image/png');
   link.click();
 };
+
+const SCALE_OPEN_STRINGS = [4, 11, 7, 2, 9, 4];
+const SCALE_STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
+
+const scaleNoteToPitchClass = (note: string): number | null => {
+  const match = note.match(/^([A-G])(#|b)?$/);
+  if (!match) return null;
+  const naturals: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  const accidental = match[2] === '#' ? 1 : match[2] === 'b' ? -1 : 0;
+  return (naturals[match[1]] + accidental + 12) % 12;
+};
+
+export const exportScaleFretboard = (notes: string[], mode: ExportMode, fretCount = 15) => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1920;
+  canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const isBW = mode === 'bw';
+  if (isBW) {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  const selectedNotes = new Set(
+    notes.map(scaleNoteToPitchClass).filter((note): note is number => note !== null),
+  );
+  const left = 160;
+  const top = 330;
+  const boardWidth = canvas.width - left - 100;
+  const boardHeight = 420;
+  const stringSpacing = boardHeight / 5;
+  const openWidth = 70;
+  const fretWidth = (boardWidth - openWidth) / fretCount;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 86px Inter, Roboto, sans-serif';
+  ctx.fillText('Escala en el diapasón', canvas.width / 2, 150);
+
+  for (let stringIndex = 0; stringIndex < 6; stringIndex++) {
+    const y = top + stringIndex * stringSpacing;
+    ctx.globalAlpha = 0.7;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(left, y);
+    ctx.lineTo(left + boardWidth, y);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.font = 'bold 36px Inter, Roboto, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(SCALE_STRING_NAMES[stringIndex], left - 35, y);
+
+    for (let fret = 0; fret <= fretCount; fret++) {
+      if (!selectedNotes.has((SCALE_OPEN_STRINGS[stringIndex] + fret) % 12)) continue;
+      const x = fret === 0 ? left + openWidth / 2 : left + openWidth + (fret - 0.5) * fretWidth;
+      ctx.beginPath();
+      ctx.fillStyle = isBW ? '#ffffff' : '#a855f7';
+      ctx.arc(x, y, 24, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  ctx.strokeStyle = '#ffffff';
+  for (let fret = 0; fret <= fretCount; fret++) {
+    const x = left + openWidth + fret * fretWidth;
+    ctx.globalAlpha = 0.65;
+    ctx.lineWidth = fret === 0 ? 10 : 5;
+    ctx.beginPath();
+    ctx.moveTo(x, top - stringSpacing / 2);
+    ctx.lineTo(x, top + boardHeight + stringSpacing / 2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  const safeNotes = notes.join('-').replace(/[^a-zA-Z0-9#-]/g, '');
+  const link = document.createElement('a');
+  link.download = `escala_${safeNotes}_${mode}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+};

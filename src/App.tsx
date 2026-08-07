@@ -14,13 +14,13 @@ import {
 } from "lucide-react";
 import { ChordCard } from "./components/ChordCard";
 import { CollapsiblePanel } from "./components/CollapsiblePanel";
-import { GuitarDiagram } from "./components/GuitarDiagram";
+import { GuitarDiagram, ScaleFretboard } from "./components/GuitarDiagram";
 import {
   getGuitarPositions,
   transposeNote,
   getGuitarVoicing,
 } from "./utils/guitarChords";
-import { exportChordDiagram } from "./utils/exportDiagram";
+import { exportChordDiagram, exportScaleFretboard } from "./utils/exportDiagram";
 import { usePersistentPanelState } from "./hooks/usePersistentPanelState";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import "./App.css";
@@ -1252,10 +1252,11 @@ function App() {
                         style={{
                           marginBottom: "0.5rem",
                           display: "flex",
-                          justifyContent: "space-between",
+                          justifyContent: "center",
                           alignItems: "center",
                         }}
                       >
+                        <span className="guitar-control-label">Posición acordes</span>
                         <div className="position-selector">
                           {positions.map((_, idx) => (
                             <button
@@ -1281,46 +1282,69 @@ function App() {
                           ))}
                         </div>
                       </div>
-                      <GuitarDiagram
-                        position={positions[currentPosIdx]}
-                        chordName={explorationChord.name}
-                      />
+                      <div className="guitar-visuals">
+                        <GuitarDiagram
+                          position={positions[currentPosIdx]}
+                          chordName={explorationChord.name}
+                        />
+                        <ScaleFretboard notes={parsedNotes} />
+                      </div>
 
-                      <div
-                        className="export-controls"
-                        style={{ display: "flex", gap: "0.5rem" }}
-                      >
-                        <p>Esportar acordes:</p>
-                        <button
-                          className="global-btn"
-                          style={{ padding: "4px 8px", fontSize: "0.75rem" }}
-                          onClick={() =>
-                            exportChordDiagram(
-                              explorationChord.name,
-                              positions[currentPosIdx],
-                              currentPosIdx,
-                              "transparent",
-                            )
-                          }
-                          title="Exportar Transparente (PNG)"
-                        >
-                          Exportar Transparente (PNG)
-                        </button>
-                        <button
-                          className="global-btn"
-                          style={{ padding: "4px 8px", fontSize: "0.75rem" }}
-                          onClick={() =>
-                            exportChordDiagram(
-                              explorationChord.name,
-                              positions[currentPosIdx],
-                              currentPosIdx,
-                              "bw",
-                            )
-                          }
-                          title="Exportar Blanco y Negro (PNG)"
-                        >
-                          Exportar Blanco y Negro (PNG)
-                        </button>
+                      <div className="guitar-export-container">
+                        <div className="export-controls">
+                          <p>Exportar acordes:</p>
+                          <button
+                            className="global-btn"
+                            style={{ padding: "4px 8px", fontSize: "0.75rem" }}
+                            onClick={() =>
+                              exportChordDiagram(
+                                explorationChord.name,
+                                positions[currentPosIdx],
+                                currentPosIdx,
+                                "transparent",
+                              )
+                            }
+                            title="Exportar Transparente (PNG)"
+                          >
+                            Exportar Transparente (PNG)
+                          </button>
+                          <button
+                            className="global-btn"
+                            style={{ padding: "4px 8px", fontSize: "0.75rem" }}
+                            onClick={() =>
+                              exportChordDiagram(
+                                explorationChord.name,
+                                positions[currentPosIdx],
+                                currentPosIdx,
+                                "bw",
+                              )
+                            }
+                            title="Exportar Blanco y Negro (PNG)"
+                          >
+                            Exportar Blanco y Negro (PNG)
+                          </button>
+                        </div>
+                      </div>
+                      <div className="scale-export-container">
+                        <div className="export-controls">
+                          <p>Exportar escala:</p>
+                          <button
+                            className="global-btn"
+                            style={{ padding: "4px 8px", fontSize: "0.75rem" }}
+                            onClick={() =>
+                              exportScaleFretboard(parsedNotes, "transparent")
+                            }
+                          >
+                            Exportar Transparente (PNG)
+                          </button>
+                          <button
+                            className="global-btn"
+                            style={{ padding: "4px 8px", fontSize: "0.75rem" }}
+                            onClick={() => exportScaleFretboard(parsedNotes, "bw")}
+                          >
+                            Exportar Blanco y Negro (PNG)
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ) : (

@@ -1167,15 +1167,19 @@
 
 /* ── Guitar Diagram ─────────────────────────────────────── */
 .guitar-view-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  column-gap: 1rem;
+  row-gap: 0.75rem;
+  align-items: start;
   padding: 1rem;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 12px;
   border: 1px solid var(--border-color);
   margin-top: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .guitar-header-controls {
@@ -1183,6 +1187,44 @@
   flex-direction: column;
   gap: 0.75rem;
   width: 100%;
+  align-items: center;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.guitar-control-label {
+  align-self: flex-start;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.export-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.guitar-export-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.scale-export-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.export-controls p {
+  margin: 0;
 }
 
 .transpose-controls {
@@ -1269,6 +1311,9 @@
   flex-direction: column;
   align-items: center;
   width: 180px;
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: center;
 }
 
 .diagram-header {
@@ -1360,4 +1405,135 @@
   font-size: 0.75rem;
   color: var(--text-muted);
   font-weight: 600;
+}
+
+.guitar-visuals {
+  display: contents;
+}
+
+.scale-fretboard-section {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 100%;
+  min-width: 0;
+  padding: 0.1rem 1.25rem 0 2rem;
+  border-left: 1px solid var(--border-color);
+  box-sizing: border-box;
+}
+
+.scale-fretboard-title {
+  margin-bottom: 3rem;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+.scale-fretboard-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0.6rem 0.5rem 1rem 0;
+}
+
+.scale-fretboard {
+  display: flex;
+  align-items: stretch;
+  min-width: 620px;
+  height: 180px;
+}
+
+.scale-string-labels {
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  width: 24px;
+  flex: 0 0 24px;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.scale-string-labels span {
+  display: flex;
+  align-items: center;
+}
+
+.scale-fret-grid {
+  position: relative;
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  flex: 1;
+}
+
+.scale-string {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px repeat(var(--fret-count), minmax(34px, 1fr));
+}
+
+.scale-string::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.42);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.scale-fret {
+  position: relative;
+  border-right: 1px solid var(--text-muted);
+}
+
+.scale-fret.open-fret {
+  border-right: 4px solid var(--text-primary);
+}
+
+.scale-note-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--accent-purple);
+  box-shadow: 0 0 8px var(--accent-purple-glow);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+@media (max-width: 850px) {
+  .guitar-view-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+  }
+
+  .guitar-header-controls,
+  .guitar-diagram,
+  .scale-fretboard-section,
+  .guitar-export-container,
+  .scale-export-container {
+    grid-column: 1;
+  }
+
+  .guitar-header-controls { grid-row: 1; }
+  .guitar-diagram { grid-row: 2; }
+  .guitar-export-container { grid-row: 3; }
+  .scale-fretboard-section {
+    grid-row: 4;
+    border-left: 0;
+    border-top: 1px solid var(--border-color);
+    padding: 1.5rem 0 0;
+  }
+
+  .scale-export-container { grid-row: 5; }
+
+  .scale-fretboard-section {
+    width: 100%;
+  }
+
+  .scale-fretboard-title {
+    margin-bottom: 1rem;
+    text-align: center;
+  }
 }
