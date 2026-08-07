@@ -3,6 +3,7 @@ import type { ChordPosition } from '../utils/guitarChords';
 
 const OPEN_STRING_NOTES = [4, 11, 7, 2, 9, 4]; // e, B, G, D, A, E
 const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
+const FRET_MARKERS = [3, 5, 7, 12, 15];
 
 interface ScaleFretboardProps {
   notes: string[];
@@ -43,6 +44,20 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
             ))}
           </div>
           <div className="scale-fret-grid">
+            <div className="scale-fret-markers" aria-hidden="true">
+              {FRET_MARKERS.filter((fret) => fret <= fretCount).map((fret) => (
+                <span
+                  className={`scale-fret-marker ${fret === 12 ? 'double' : ''}`}
+                  key={fret}
+                  style={{
+                    left: `calc(26px + ((100% - 26px) / ${fretCount}) * ${fret - 0.5})`,
+                  }}
+                >
+                  <i />
+                  {fret === 12 && <i />}
+                </span>
+              ))}
+            </div>
             {OPEN_STRING_NOTES.map((openNote, stringIndex) => (
               <div className="scale-string" key={stringIndex}>
                 {Array.from({ length: fretCount + 1 }, (_, fret) => {

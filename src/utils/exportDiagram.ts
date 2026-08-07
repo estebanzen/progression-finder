@@ -162,6 +162,7 @@ export const exportChordDiagram = (
 
 const SCALE_OPEN_STRINGS = [4, 11, 7, 2, 9, 4];
 const SCALE_STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
+const SCALE_FRET_MARKERS = [3, 5, 7, 12, 15];
 
 const scaleNoteToPitchClass = (note: string): number | null => {
   const match = note.match(/^([A-G])(#|b)?$/);
@@ -236,6 +237,20 @@ export const exportScaleFretboard = (notes: string[], mode: ExportMode, fretCoun
     ctx.moveTo(x, top - stringSpacing / 2);
     ctx.lineTo(x, top + boardHeight + stringSpacing / 2);
     ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.globalAlpha = 0.65;
+  for (const fret of SCALE_FRET_MARKERS.filter((marker) => marker <= fretCount)) {
+    const x = left + openWidth + (fret - 0.5) * fretWidth;
+    const markerY = top - stringSpacing / 2 - 28;
+    const offsets = fret === 12 ? [-13, 13] : [0];
+    for (const offset of offsets) {
+      ctx.beginPath();
+      ctx.arc(x + offset, markerY, 8, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
 
