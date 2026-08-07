@@ -11,10 +11,12 @@ import {
   Maximize2,
   Minimize2,
   List,
+  Settings,
 } from "lucide-react";
 import { ChordCard } from "./components/ChordCard";
 import { CollapsiblePanel } from "./components/CollapsiblePanel";
 import { GuitarDiagram, ScaleFretboard } from "./components/GuitarDiagram";
+import { AudioControlsModal } from "./components/AudioControlsModal";
 import {
   getGuitarPositions,
   transposeNote,
@@ -301,10 +303,7 @@ function App() {
     "panel_scales_open",
     false,
   );
-  const [panelAudioOpen, setPanelAudioOpen] = usePersistentPanelState(
-    "panel_audio_open",
-    false,
-  );
+  const [audioModalOpen, setAudioModalOpen] = useState(false);
   const [panelChordsOpen, setPanelChordsOpen] = usePersistentPanelState(
     "panel_chords_open",
     true,
@@ -768,14 +767,25 @@ function App() {
             </div>
             <span>Progression Finder</span>
           </div>
-          <button
-            className={`global-btn ${compactMode ? "active" : ""}`}
-            onClick={() => setCompactMode(!compactMode)}
-            aria-label="Alternar modo compacto"
-          >
-            {compactMode ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
-            <span>Modo compacto</span>
-          </button>
+          <div className="navbar-actions">
+            <button
+              className="global-btn audio-settings-btn"
+              onClick={() => setAudioModalOpen(true)}
+              aria-label="Abrir controles de audio"
+              title="Controles de Audio"
+            >
+              <Settings size={17} />
+              <span>Audio</span>
+            </button>
+            <button
+              className={`global-btn ${compactMode ? "active" : ""}`}
+              onClick={() => setCompactMode(!compactMode)}
+              aria-label="Alternar modo compacto"
+            >
+              {compactMode ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
+              <span>Modo compacto</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -847,14 +857,10 @@ function App() {
           </div>
         </CollapsiblePanel>
 
-        {/* Audio Controls Panel */}
-        <CollapsiblePanel
-          title="Controles de Audio"
-          icon={<Volume2 size={20} className="text-purple-400" />}
-          compactMode={compactMode}
-          isOpen={panelAudioOpen}
-          onToggle={setPanelAudioOpen}
-          className="audio-controls-panel"
+        {/* Audio controls modal */}
+        <AudioControlsModal
+          isOpen={audioModalOpen}
+          onClose={() => setAudioModalOpen(false)}
         >
           {/* Instrument error toast */}
           {instrumentError && (
@@ -1030,7 +1036,7 @@ function App() {
               </div>
             </div>
           </div>
-        </CollapsiblePanel>
+        </AudioControlsModal>
 
         {/* Main interactive stack */}
         <div

@@ -1433,6 +1433,98 @@
   padding: 1.4rem 0.5rem 1rem 0;
 }
 
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.audio-settings-btn svg {
+  transition: transform 0.25s ease;
+}
+
+.audio-settings-btn:hover svg {
+  transform: rotate(35deg);
+}
+
+.audio-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(3, 4, 10, 0.76);
+  backdrop-filter: blur(8px);
+  animation: audio-modal-fade 0.18s ease-out;
+}
+
+.audio-modal {
+  width: min(960px, 100%);
+  max-height: min(820px, calc(100vh - 2.5rem));
+  overflow: hidden;
+  background: #11121d;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  animation: audio-modal-enter 0.2s ease-out;
+}
+
+.audio-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.audio-modal-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.audio-modal-header h2 svg {
+  color: var(--accent-purple);
+}
+
+.audio-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.audio-modal-close:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.audio-modal-content {
+  max-height: calc(min(820px, 100vh - 2.5rem) - 68px);
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+@keyframes audio-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes audio-modal-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .scale-fretboard {
   display: flex;
   align-items: stretch;
