@@ -301,10 +301,6 @@ function App() {
     "panel_scales_open",
     false,
   );
-  const [panelNotesOpen, setPanelNotesOpen] = usePersistentPanelState(
-    "panel_notes_open",
-    true,
-  );
   const [panelAudioOpen, setPanelAudioOpen] = usePersistentPanelState(
     "panel_audio_open",
     false,
@@ -787,72 +783,70 @@ function App() {
       </header>
 
       <main className="container">
-        {/* Presets Grid */}
+        {/* Scale notes and presets */}
         <CollapsiblePanel
-          title="Presets de Escalas"
+          title="Escalas"
           icon={<Sparkles size={20} className="text-purple-400" />}
           compactMode={compactMode}
           isOpen={panelScalesOpen}
           onToggle={setPanelScalesOpen}
         >
-          <div className="presets-container">
-            {PRESETS.map((preset) => {
-              const isActive = rawInput === preset.notes;
-              return (
-                <button
-                  key={preset.name}
-                  className={`preset-btn ${isActive ? "active" : ""}`}
-                  onClick={() => setRawInput(preset.notes)}
-                  aria-label={`Aplicar escala ${preset.name}`}
-                >
-                  {preset.name}
-                </button>
-              );
-            })}
-          </div>
-        </CollapsiblePanel>
-
-        {/* Input Section */}
-        <CollapsiblePanel
-          title="Notas de la Escala"
-          icon={<Info size={20} className="text-purple-400" />}
-          compactMode={compactMode}
-          isOpen={panelNotesOpen}
-          onToggle={setPanelNotesOpen}
-        >
-          <div className="input-group">
-            <input
-              id="notes-input"
-              type="text"
-              placeholder="Ej: C D E F G A B"
-              value={rawInput}
-              onChange={(e) => setRawInput(e.target.value)}
-              aria-label="Notas de la escala en cifrado americano"
-            />
-            {!compactMode && (
-              <div className="input-help">
-                <Info size={14} />
-                <span>
-                  Introduce notas separadas por espacios o comas. Se admiten
-                  alteraciones (# y b).
-                </span>
+          <div className="scales-grid">
+            <section className="scale-block" aria-labelledby="scale-notes-title">
+              <h3 id="scale-notes-title">Notas de la Escala</h3>
+              <div className="input-group">
+                <input
+                  id="notes-input"
+                  type="text"
+                  placeholder="Ej: C D E F G A B"
+                  value={rawInput}
+                  onChange={(e) => setRawInput(e.target.value)}
+                  aria-label="Notas de la escala en cifrado americano"
+                />
+                {!compactMode && (
+                  <div className="input-help">
+                    <Info size={14} />
+                    <span>
+                      Introduce notas separadas por espacios o comas. Se admiten
+                      alteraciones (# y b).
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Visual parsed badges */}
-          <div className="parsed-notes-list">
-            {parsedNotes.length > 0 ? (
-              parsedNotes.map((note, idx) => (
-                <span key={`${note}-${idx}`} className="note-badge">
-                  {note}
-                </span>
-              ))
-            ) : (
-              <span className="text-muted" style={{ fontSize: "0.9rem" }}>
-                Esperando notas válidas...
-              </span>
-            )}
+              <div className="parsed-notes-list">
+                {parsedNotes.length > 0 ? (
+                  parsedNotes.map((note, idx) => (
+                    <span key={`${note}-${idx}`} className="note-badge">
+                      {note}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-muted" style={{ fontSize: "0.9rem" }}>
+                    Esperando notas válidas...
+                  </span>
+                )}
+              </div>
+            </section>
+
+            <section className="scale-block" aria-labelledby="scale-presets-title">
+              <h3 id="scale-presets-title">Presets de Escalas</h3>
+              <div className="presets-container">
+                {PRESETS.map((preset) => {
+                  const isActive = rawInput === preset.notes;
+                  return (
+                    <button
+                      key={preset.name}
+                      className={`preset-btn ${isActive ? "active" : ""}`}
+                      onClick={() => setRawInput(preset.notes)}
+                      aria-label={`Aplicar escala ${preset.name}`}
+                    >
+                      {preset.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           </div>
         </CollapsiblePanel>
 
