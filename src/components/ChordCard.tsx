@@ -12,7 +12,19 @@ export const ChordCard: React.FC<ChordCardProps> = ({
   isSelected,
   onPlay
 }) => {
-  const badgeLabel = chord.type === 'halfdiminished' ? 'half-dim' : chord.type === 'dominant' ? 'dom7' : chord.type === 'unknown' ? 'otro' : chord.type;
+  const badgeLabels: Record<ChordInfo['type'], string> = {
+    major: 'major',
+    minor: 'minor',
+    diminished: 'diminished',
+    dominant: 'dom7',
+    halfdiminished: 'half-dim',
+    augmented: 'augmented',
+    'minor-major': 'minj7',
+    'augmented-major': 'maj7#5',
+    suspended: 'suspended',
+    unknown: 'otro',
+  };
+  const badgeLabel = badgeLabels[chord.type];
   
   return (
     <div 

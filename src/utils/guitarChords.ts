@@ -74,6 +74,14 @@ const SHAPES: Record<string, ShapeDef[]> = {
     { frets: ['X', 0, 2, 0, 1, 0], rootString: 1, shapeRootSemitone: 9 }, // Am7
     { frets: ['X', 'X', 0, 2, 1, 1], rootString: 2, shapeRootSemitone: 2 }, // Dm7
   ],
+  'minj7': [
+    { frets: [0, 2, 1, 0, 0, 0], rootString: 0, shapeRootSemitone: 4 },
+    { frets: ['X', 0, 2, 1, 1, 0], rootString: 1, shapeRootSemitone: 9 }
+  ],
+  'maj7#5': [
+    { frets: [0, 'X', 1, 1, 1, 0], rootString: 0, shapeRootSemitone: 4 },
+    { frets: ['X', 3, 2, 1, 0, 0], rootString: 1, shapeRootSemitone: 0 }
+  ],
   '7': [
     { frets: [0, 2, 0, 1, 0, 0], rootString: 0, shapeRootSemitone: 4 }, // E7
     { frets: ['X', 0, 2, 0, 2, 0], rootString: 1, shapeRootSemitone: 9 }, // A7
@@ -142,21 +150,27 @@ const MOVABLE_SHAPES: Record<string, ShapeDef[]> = {
 };
 
 export const getGuitarPositions = (rootNote: string, suffix: string, isSeventh: boolean): ChordPosition[] => {
-  let typeKey = 'major';
+  let typeKey: string | null = null;
   if (isSeventh) {
     if (suffix === 'maj7') typeKey = 'maj7';
     else if (suffix === '7') typeKey = '7';
     else if (suffix === 'm7') typeKey = 'm7';
-    else if (suffix === 'm7b5') typeKey = 'm7b5';
+    else if (suffix === 'minj7') typeKey = 'minj7';
+    else if (suffix === 'maj7#5') typeKey = 'maj7#5';
+    else if (suffix === 'min7/b5') typeKey = 'm7b5';
     else if (suffix === 'dim7') typeKey = 'dim7';
   } else {
-    if (suffix === 'm') typeKey = 'minor';
+    if (suffix === '') typeKey = 'major';
+    else if (suffix === 'm') typeKey = 'minor';
     else if (suffix === 'dim') typeKey = 'diminished';
     else if (suffix === 'aug') typeKey = 'aug';
   }
 
+  if (!typeKey) return [];
+
   const rootSemi = noteToSemitone(rootNote);
-  const shapes = MOVABLE_SHAPES[typeKey] || SHAPES[typeKey] || SHAPES['major'];
+  const shapes = MOVABLE_SHAPES[typeKey] || SHAPES[typeKey];
+  if (!shapes) return [];
 
   const positions: ChordPosition[] = [];
 

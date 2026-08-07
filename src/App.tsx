@@ -23,6 +23,7 @@ import {
   getGuitarVoicing,
 } from "./utils/guitarChords";
 import { exportChordDiagram, exportScaleFretboard } from "./utils/exportDiagram";
+import { detectChordFormula, type ChordQuality } from "./utils/chordDetector";
 import { usePersistentPanelState } from "./hooks/usePersistentPanelState";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import "./App.css";
@@ -63,6 +64,15 @@ const normalizeNote = (noteStr: string): string | null => {
   const accidental = match[2] ? (match[2] === "#" ? "#" : "b") : "";
   return base + accidental;
 };
+
+const formatChordName = (
+  root: string,
+  suffix: string,
+  type: ChordQuality,
+  seventh?: string,
+) => type === "augmented-major" && seventh
+  ? `${root}aug/${seventh}`
+  : `${root}${suffix}`;
 
 // Generate triad voicing ascending from baseOctave
 const getVoicedNotes = (
@@ -146,13 +156,8 @@ export interface ChordInfo {
   third: string;
   fifth: string;
   seventh?: string;
-  type:
-    | "major"
-    | "minor"
-    | "diminished"
-    | "dominant"
-    | "halfdiminished"
-    | "unknown";
+  type: ChordQuality;
+  suffix: string;
   name: string;
   notes: string[];
   voicedNotes: string[];
@@ -494,34 +499,11 @@ function App() {
         const sSem = noteToSemits[seventh] ?? 0;
         const interval7 = (sSem - rSem + 12) % 12;
 
-        let type: ChordInfo["type"] = "unknown";
-        let suffix = "";
+        const formula = detectChordFormula([interval3, interval5, interval7]);
+        const type = formula.quality;
+        const suffix = formula.suffix;
 
-        // Major 7: M3 + P5 + M7
-        if (interval3 === 4 && interval5 === 7 && interval7 === 11) {
-          type = "major";
-          suffix = "maj7";
-          // Dominant 7: M3 + P5 + m7
-        } else if (interval3 === 4 && interval5 === 7 && interval7 === 10) {
-          type = "dominant";
-          suffix = "7";
-          // Minor 7: m3 + P5 + m7
-        } else if (interval3 === 3 && interval5 === 7 && interval7 === 10) {
-          type = "minor";
-          suffix = "m7";
-          // Half-diminished m7b5: m3 + d5 + m7
-        } else if (interval3 === 3 && interval5 === 6 && interval7 === 10) {
-          type = "halfdiminished";
-          suffix = "m7b5";
-          // Diminished 7: m3 + d5 + d7
-        } else if (interval3 === 3 && interval5 === 6 && interval7 === 9) {
-          type = "diminished";
-          suffix = "dim7";
-        } else {
-          suffix = "?";
-        }
-
-        const name = `${root}${suffix}`;
+        const name = formatChordName(root, suffix, type, seventh);
         const voicedNotes = getVoicedNotesseventh(root, third, fifth, seventh);
 
         detectedChords.push({
@@ -530,32 +512,18 @@ function App() {
           fifth,
           seventh,
           type,
+          suffix,
           name,
           notes: [root, third, fifth, seventh],
           voicedNotes,
           isSeventhChord: true,
         });
       } else {
-        let type: ChordInfo["type"] = "unknown";
-        let suffix = "";
+        const formula = detectChordFormula([interval3, interval5]);
+        const type = formula.quality;
+        const suffix = formula.suffix;
 
-        if (interval3 === 4 && interval5 === 7) {
-          type = "major";
-          suffix = "";
-        } else if (interval3 === 3 && interval5 === 7) {
-          type = "minor";
-          suffix = "m";
-        } else if (interval3 === 3 && interval5 === 6) {
-          type = "diminished";
-          suffix = "dim";
-        } else {
-          if (interval3 === 4 && interval5 === 8) suffix = "aug";
-          else if (interval3 === 5 && interval5 === 7) suffix = "sus4";
-          else if (interval3 === 2 && interval5 === 7) suffix = "sus2";
-          else suffix = "?";
-        }
-
-        const name = `${root}${suffix}`;
+        const name = formatChordName(root, suffix, type);
         const voicedNotes = getVoicedNotes(root, third, fifth);
 
         detectedChords.push({
@@ -563,6 +531,7 @@ function App() {
           third,
           fifth,
           type,
+          suffix,
           name,
           notes: [root, third, fifth],
           voicedNotes,
@@ -635,9 +604,13 @@ function App() {
       ? transposeNote(explorationChord.seventh, semitones)
       : undefined;
 
-    const suffixMatch = explorationChord.name.match(/^[A-G](#|b)?(.*)$/);
-    const suffix = suffixMatch ? suffixMatch[2] : "";
-    const newName = `${newRoot}${suffix}`;
+    const suffix = explorationChord.suffix;
+    const newName = formatChordName(
+      newRoot,
+      suffix,
+      explorationChord.type,
+      newSeventh,
+    );
 
     const newNotes = [newRoot, newThird, newFifth];
     if (newSeventh) newNotes.push(newSeventh);
@@ -690,8 +663,7 @@ function App() {
   // Replay selected chord
   const handleReplay = async () => {
     if (!explorationChord) return;
-    const suffixMatch = explorationChord.name.match(/^[A-G](#|b)?(.*)$/);
-    const suffix = suffixMatch ? suffixMatch[2] : "";
+    const suffix = explorationChord.suffix;
     const positions = getGuitarPositions(
       explorationChord.root,
       suffix,
@@ -1230,9 +1202,7 @@ function App() {
                 onToggle={setPanelGuitarOpen}
               >
                 {(() => {
-                  const suffixMatch =
-                    explorationChord.name.match(/^[A-G](#|b)?(.*)$/);
-                  const suffix = suffixMatch ? suffixMatch[2] : "";
+                  const suffix = explorationChord.suffix;
                   const positions = getGuitarPositions(
                     explorationChord.root,
                     suffix,

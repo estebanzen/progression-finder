@@ -1433,6 +1433,22 @@
   padding: 1.4rem 0.5rem 1rem 0;
 }
 
+.chord-card.augmented,
+.chord-card.augmented-major {
+  --chord-accent: #22d3ee;
+  --chord-accent-glow: rgba(34, 211, 238, 0.2);
+}
+
+.chord-card.minor-major {
+  --chord-accent: #c084fc;
+  --chord-accent-glow: rgba(192, 132, 252, 0.22);
+}
+
+.chord-card.suspended {
+  --chord-accent: #34d399;
+  --chord-accent-glow: rgba(52, 211, 153, 0.2);
+}
+
 .navbar-actions {
   display: flex;
   align-items: center;
