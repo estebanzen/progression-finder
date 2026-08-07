@@ -322,9 +322,6 @@ function App() {
     "panel_guitar_open",
     true,
   );
-  const [panelTranspositionOpen, setPanelTranspositionOpen] =
-    usePersistentPanelState("panel_transposition_open", true);
-
   const [explorationChord, setExplorationChord] = useState<ChordInfo | null>(
     null,
   );
@@ -1009,6 +1006,29 @@ function App() {
                 </>
               )}
             </div>
+
+            <div className="control-group transposition-group">
+              <h3>Transposición</h3>
+              <div className="transpose-controls">
+                <button
+                  className="transpose-btn"
+                  onClick={() => handleTranspose(-1)}
+                  disabled={!explorationChord}
+                  aria-label="Bajar un semitono"
+                >
+                  -1 Semitono
+                </button>
+                <span>Transportar</span>
+                <button
+                  className="transpose-btn"
+                  onClick={() => handleTranspose(1)}
+                  disabled={!explorationChord}
+                  aria-label="Subir un semitono"
+                >
+                  +1 Semitono
+                </button>
+              </div>
+            </div>
           </div>
         </CollapsiblePanel>
 
@@ -1371,49 +1391,6 @@ function App() {
                 </div>
               </CollapsiblePanel>
 
-              {/* Transposition */}
-              <CollapsiblePanel
-                title="Transposición"
-                compactMode={compactMode}
-                isOpen={panelTranspositionOpen}
-                onToggle={setPanelTranspositionOpen}
-              >
-                <div
-                  className="guitar-view-container"
-                  style={{
-                    padding: compactMode ? "0.5rem" : "1rem",
-                    marginTop: 0,
-                  }}
-                >
-                  <div className="guitar-header-controls">
-                    <div className="transpose-controls">
-                      <button
-                        className="transpose-btn"
-                        onClick={() => handleTranspose(-1)}
-                        aria-label="Bajar un semitono"
-                      >
-                        -1 Semitono
-                      </button>
-                      <span
-                        className="text-sm font-semibold"
-                        style={{
-                          fontSize: "0.8rem",
-                          color: "var(--text-muted)",
-                        }}
-                      >
-                        Transportar
-                      </span>
-                      <button
-                        className="transpose-btn"
-                        onClick={() => handleTranspose(1)}
-                        aria-label="Subir un semitono"
-                      >
-                        +1 Semitono
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </CollapsiblePanel>
             </>
           ) : (
             <CollapsiblePanel

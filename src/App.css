@@ -1196,6 +1196,15 @@
   border: 1px solid var(--border-color);
 }
 
+.transposition-group {
+  min-width: 250px;
+}
+
+.transposition-group .transpose-controls span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 .transpose-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-color);
@@ -1210,6 +1219,17 @@
   background: var(--accent-purple-glow);
   color: var(--accent-purple);
   border-color: var(--accent-purple);
+}
+
+.transpose-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.transpose-btn:disabled:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
 .position-selector {
