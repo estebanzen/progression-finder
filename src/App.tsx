@@ -194,6 +194,15 @@ const BLACK_KEYS = [
   { note: "A#5", left: 90.45 },
 ];
 
+const CHORD_WHITE_KEYS = WHITE_KEYS.slice(0, 7);
+const CHORD_BLACK_KEYS = [
+  { note: "C#4", left: 9.49 },
+  { note: "D#4", left: 23.77 },
+  { note: "F#4", left: 52.35 },
+  { note: "G#4", left: 66.63 },
+  { note: "A#4", left: 80.92 },
+];
+
 const CHROMATIC_NOTES = [
   "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
 ] as const;
@@ -299,6 +308,65 @@ const SAMPLER_URLS = {
 };
 
 type PlayMode = "chord" | "arpeggio";
+
+interface PianoKeyboardProps {
+  whiteKeys: string[];
+  blackKeys: Array<{ note: string; left: number }>;
+  isActive: (note: string) => boolean;
+  isRoot: (note: string) => boolean;
+  onPlay: (note: string) => void;
+  compact?: boolean;
+}
+
+function PianoKeyboard({
+  whiteKeys,
+  blackKeys,
+  isActive,
+  isRoot,
+  onPlay,
+  compact = false,
+}: PianoKeyboardProps) {
+  return (
+    <div className={`piano-keys-wrapper ${compact ? "compact" : ""}`}>
+      <div className="piano-white-keys">
+        {whiteKeys.map((keyNote) => {
+          const active = isActive(keyNote);
+          const root = active && isRoot(keyNote);
+          return (
+            <button
+              type="button"
+              key={keyNote}
+              className={`piano-key-white ${active ? "active" : ""} ${root ? "root" : ""}`}
+              onClick={() => onPlay(keyNote)}
+              aria-label={`Tocar ${keyNote}`}
+              title={`Tocar ${keyNote}`}
+            >
+              <span className="key-note-label">{keyNote.replace(/\d+$/, "")}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {blackKeys.map(({ note, left }) => {
+        const active = isActive(note);
+        const root = active && isRoot(note);
+        return (
+          <button
+            type="button"
+            key={note}
+            className={`piano-key-black ${active ? "active" : ""} ${root ? "root" : ""}`}
+            style={{ left: `${left}%` }}
+            onClick={() => onPlay(note)}
+            aria-label={`Tocar ${note}`}
+            title={`Tocar ${note}`}
+          >
+            <span className="key-note-label">{note.replace(/\d+$/, "")}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function App() {
   const [rawInput, setRawInput] = useState(() => {
@@ -826,34 +894,23 @@ function App() {
     }
   };
 
-  // Helper to determine if a keyboard note matches one of the selected chord's notes
-  const isKeyActive = (keyNote: string): boolean => {
-    if (manuallyPressedKeys[keyNote]) return true;
-    if (!explorationChord) return false;
-
-    const keyMatch = keyNote.match(/^([A-G]#?|b?)([0-9])$/);
-    if (!keyMatch) return false;
-    const keyPC = keyMatch[1];
-    const keyOct = keyMatch[2];
-
-    return explorationChord.voicedNotes.some((voicedNote) => {
-      const voicedMatch = voicedNote.match(/^([A-G]#?|b?)([0-9])$/);
-      if (!voicedMatch) return false;
-      const voicedPC = voicedMatch[1];
-      const voicedOct = voicedMatch[2];
-
-      if (keyOct !== voicedOct) return false;
-
-      const keySem = noteToSemits[keyPC];
-      const voicedSem = noteToSemits[voicedPC];
-      return keySem === voicedSem;
-    });
-  };
-
   const isKeyRoot = (keyNote: string): boolean => {
     if (!explorationChord) return false;
     const keyPitchClass = keyNote.replace(/\d+$/, "");
     return noteToSemits[keyPitchClass] === noteToSemits[explorationChord.root];
+  };
+
+  const isScaleKeyActive = (keyNote: string): boolean => {
+    if (manuallyPressedKeys[keyNote]) return true;
+    const keyPitchClass = keyNote.replace(/\d+$/, "");
+    return parsedNotes.some(
+      (note) => noteToSemits[note] === noteToSemits[keyPitchClass],
+    );
+  };
+
+  const isScaleKeyRoot = (keyNote: string): boolean => {
+    const keyPitchClass = keyNote.replace(/\d+$/, "");
+    return noteToSemits[keyPitchClass] === noteToSemits[scaleRoot];
   };
 
   return (
@@ -1484,57 +1541,44 @@ function App() {
                 isOpen={panelPianoOpen}
                 onToggle={setPanelPianoOpen}
               >
-                <div
-                  className="piano-keyboard-container"
-                  style={{ marginTop: 0 }}
-                >
-                  <div className="piano-labels">
-                    <span>Octava 4</span>
-                    <span>Octava 5</span>
-                  </div>
-                  <div className="piano-keys-wrapper">
-                    {/* White keys */}
-                    <div className="piano-white-keys">
-                      {WHITE_KEYS.map((keyNote) => {
-                        const active = isKeyActive(keyNote);
-                        const root = active && isKeyRoot(keyNote);
-                        const keyPC = keyNote.slice(0, -1);
-                        return (
-                          <div
-                            key={keyNote}
-                            className={`piano-key-white ${active ? "active" : ""} ${root ? "root" : ""}`}
-                            onClick={() => handlePlayKey(keyNote)}
-                            title={`Tocar ${keyNote}`}
-                          >
-                            <span className="key-note-label">{keyPC}</span>
-                          </div>
-                        );
-                      })}
+                <div className="piano-split-view">
+                  <section className="piano-chord-section">
+                    <div className="piano-section-heading">
+                      <span>Acorde</span>
+                      <strong>{explorationChord?.name || "—"}</strong>
                     </div>
+                    <PianoKeyboard
+                      whiteKeys={CHORD_WHITE_KEYS}
+                      blackKeys={CHORD_BLACK_KEYS}
+                      isActive={(note) =>
+                        manuallyPressedKeys[note] ||
+                        Boolean(
+                          explorationChord?.notes.some(
+                            (chordNote) =>
+                              noteToSemits[chordNote] ===
+                              noteToSemits[note.replace(/\d+$/, "")],
+                          ),
+                        )
+                      }
+                      isRoot={isKeyRoot}
+                      onPlay={handlePlayKey}
+                      compact
+                    />
+                  </section>
 
-                    {/* Black keys */}
-                    {BLACK_KEYS.map((keyObj) => {
-                      const active = isKeyActive(keyObj.note);
-                      const root = active && isKeyRoot(keyObj.note);
-                      const keyPC = keyObj.note.slice(0, -1);
-                      return (
-                        <div
-                          key={keyObj.note}
-                          className={`piano-key-black ${active ? "active" : ""} ${root ? "root" : ""}`}
-                          style={{ left: `${keyObj.left}%` }}
-                          onClick={() => handlePlayKey(keyObj.note)}
-                          title={`Tocar ${keyObj.note}`}
-                        >
-                          <span
-                            className="key-note-label"
-                            style={{ bottom: "4px", fontSize: "0.55rem" }}
-                          >
-                            {keyPC}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <section className="piano-scale-section">
+                    <div className="piano-section-heading">
+                      <span>Escala en el piano</span>
+                      <small>Octavas 4–5</small>
+                    </div>
+                    <PianoKeyboard
+                      whiteKeys={WHITE_KEYS}
+                      blackKeys={BLACK_KEYS}
+                      isActive={isScaleKeyActive}
+                      isRoot={isScaleKeyRoot}
+                      onPlay={handlePlayKey}
+                    />
+                  </section>
                 </div>
               </CollapsiblePanel>
 

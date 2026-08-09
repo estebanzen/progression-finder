@@ -51,16 +51,18 @@
 }
 
 .logo-icon::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: -50%;
   width: 200%;
   height: 100%;
-  background: linear-gradient(to right,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
   transform: rotate(30deg);
   animation: shine 6s infinite ease-in-out;
 }
@@ -565,7 +567,7 @@
 }
 
 .chord-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -581,7 +583,9 @@
 
 .chord-card:hover {
   border-color: var(--chord-accent);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 0 15px var(--chord-accent-glow);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.3),
+    0 0 15px var(--chord-accent-glow);
 }
 
 .chord-card.active {
@@ -729,6 +733,47 @@
 }
 
 /* Piano Keyboard */
+.piano-split-view {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(520px, 2fr);
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.piano-chord-section,
+.piano-scale-section {
+  min-width: 0;
+}
+
+.piano-scale-section {
+  padding-left: 2rem;
+  border-left: 1px solid var(--border-color);
+}
+
+.piano-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.piano-section-heading strong {
+  color: var(--accent-purple);
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+}
+
+.piano-section-heading small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
 .piano-keyboard-container {
   display: flex;
   flex-direction: column;
@@ -749,10 +794,17 @@
   height: 180px;
   background: #020408;
   border-radius: 12px;
-  border: 5px solid #000;
   box-shadow: var(--shadow-lg);
   user-select: none;
   width: 100%;
+}
+
+.piano-keys-wrapper.compact {
+  height: 180px;
+}
+
+.piano-keys-wrapper.compact .piano-key-black {
+  width: 9.6%;
 }
 
 .piano-white-keys {
@@ -762,6 +814,9 @@
 }
 
 .piano-key-white {
+  appearance: none;
+  min-width: 0;
+  padding: 0;
   flex: 1;
   background: #f8fafc;
   /* premium ivory-white */
@@ -780,7 +835,7 @@
 }
 
 .piano-key-white:hover {
-  background: #e2e8f0;
+  opacity: 0.75;
 }
 
 .piano-key-white.active {
@@ -791,10 +846,15 @@
     inset 0 -8px 0 rgba(0, 0, 0, 0.15),
     0 0 18px rgba(168, 85, 247, 0.7);
   z-index: 1;
+
+  border-right: 1px solid #9d57f6;
+  border-left: 1px solid #6028a3;
 }
 
 /* Black keys layer */
 .piano-key-black {
+  appearance: none;
+  padding: 0;
   position: absolute;
   top: 0;
   width: 4.8%;
@@ -810,11 +870,13 @@
   z-index: 10;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
 .piano-key-black:hover {
-  background: #334155;
+  opacity: 0.75;
 }
 
 .piano-key-black.active {
@@ -823,6 +885,11 @@
   box-shadow:
     inset 0 -6px 0 rgba(0, 0, 0, 0.3),
     0 0 15px rgba(168, 85, 247, 0.75);
+  box-shadow:
+    inset 0 -6px 0 rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(168, 85, 247, 0.75),
+    -1px 0px 15px rgb(0 0 0 / 75%);
+
   z-index: 11;
 }
 
@@ -849,6 +916,8 @@
 }
 
 .piano-key-black .key-note-label {
+  bottom: 4px;
+  font-size: 0.55rem;
   color: #94a3b8;
   /* slate-400 for black keys */
 }
@@ -980,6 +1049,19 @@
 
   .piano-keys-wrapper {
     height: 150px;
+  }
+}
+
+@media (max-width: 900px) {
+  .piano-split-view {
+    grid-template-columns: 1fr;
+  }
+
+  .piano-scale-section {
+    padding-top: 1.5rem;
+    padding-left: 0;
+    border-top: 1px solid var(--border-color);
+    border-left: 0;
   }
 }
 
@@ -1210,8 +1292,6 @@
     transform: translateY(0);
   }
 }
-
-
 
 /* ── Guitar Diagram ─────────────────────────────────────── */
 .guitar-view-container {
@@ -1620,13 +1700,23 @@
 }
 
 @keyframes audio-modal-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes audio-modal-enter {
-  from { opacity: 0; transform: translateY(10px) scale(0.985); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .scale-fretboard {
@@ -1740,9 +1830,15 @@
     grid-column: 1;
   }
 
-  .guitar-header-controls { grid-row: 1; }
-  .guitar-diagram { grid-row: 2; }
-  .guitar-export-container { grid-row: 3; }
+  .guitar-header-controls {
+    grid-row: 1;
+  }
+  .guitar-diagram {
+    grid-row: 2;
+  }
+  .guitar-export-container {
+    grid-row: 3;
+  }
   .scale-fretboard-section {
     grid-row: 4;
     border-left: 0;
@@ -1750,7 +1846,9 @@
     padding: 1.5rem 0 0;
   }
 
-  .scale-export-container { grid-row: 5; }
+  .scale-export-container {
+    grid-row: 5;
+  }
 
   .scale-fretboard-section {
     width: 100%;
