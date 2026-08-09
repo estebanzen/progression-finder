@@ -125,35 +125,63 @@
   color: var(--text-primary);
 }
 
-.presets-container {
+.scale-preset-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: flex-start;
+  align-items: flex-end;
+  gap: 0.75rem;
 }
 
-.preset-btn {
+.scale-preset-controls label {
+  display: flex;
+  flex: 1 1 150px;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.scale-preset-controls select {
+  width: 100%;
+  color-scheme: dark;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-color);
-  border-radius: 9999px;
-  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  padding: 0.6rem 2rem 0.6rem 0.75rem;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.preset-btn:hover {
+.scale-preset-controls select:hover,
+.scale-preset-controls select:focus {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--text-primary);
-  transform: translateY(-1px);
+  border-color: var(--accent-purple);
 }
 
-.preset-btn.active {
-  background: var(--accent-purple-glow);
-  border-color: var(--accent-purple);
-  color: var(--text-primary);
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+.scale-preset-controls select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-purple-glow);
+}
+
+.scale-preset-controls select optgroup {
+  color: #a1a1aa;
+  background: #11121d;
+  font-weight: 700;
+}
+
+.scale-preset-controls select option {
+  color: #f4f4f5;
+  background: #11121d;
+  font-weight: 400;
+}
+
+.preset-harmony-help {
+  margin: 0.75rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
 }
 
 /* Input Section */

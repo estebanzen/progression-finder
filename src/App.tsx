@@ -194,16 +194,61 @@ const BLACK_KEYS = [
   { note: "A#5", left: 90.45 },
 ];
 
-const PRESETS = [
-  { name: "Do Mayor (C)", notes: "C D E F G A B" },
-  { name: "La Menor (Am)", notes: "A B C D E F G" },
-  { name: "Sol Mayor (G)", notes: "G A B C D E F#" },
-  { name: "Mi Menor (Em)", notes: "E F# G A B C D" },
-  { name: "Fa Mayor (F)", notes: "F G A Bb C D E" },
-  { name: "Re Menor (Dm)", notes: "D E F G A Bb C" },
-  { name: "La Armónica m", notes: "A B C D E F G#" },
-  { name: "C Dórico", notes: "C D Eb F G A Bb" },
-];
+const CHROMATIC_NOTES = [
+  "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+] as const;
+
+const SCALE_PRESETS = [
+  { id: "major", category: "Modos griegos", name: "Mayor (Jónica)", intervals: [0, 2, 4, 5, 7, 9, 11] },
+  { id: "dorian", category: "Modos griegos", name: "Dórica", intervals: [0, 2, 3, 5, 7, 9, 10] },
+  { id: "phrygian", category: "Modos griegos", name: "Frigia", intervals: [0, 1, 3, 5, 7, 8, 10] },
+  { id: "lydian", category: "Modos griegos", name: "Lidia", intervals: [0, 2, 4, 6, 7, 9, 11] },
+  { id: "mixolydian", category: "Modos griegos", name: "Mixolidia", intervals: [0, 2, 4, 5, 7, 9, 10] },
+  { id: "minor", category: "Modos griegos", name: "Menor natural (Eólica)", intervals: [0, 2, 3, 5, 7, 8, 10] },
+  { id: "locrian", category: "Modos griegos", name: "Locria", intervals: [0, 1, 3, 5, 6, 8, 10] },
+  { id: "major-pentatonic", category: "Pentatónicas", name: "Pentatónica mayor", intervals: [0, 2, 4, 7, 9] },
+  { id: "minor-pentatonic", category: "Pentatónicas", name: "Pentatónica menor", intervals: [0, 3, 5, 7, 10] },
+  { id: "blues", category: "Pentatónicas", name: "Blues", intervals: [0, 3, 5, 6, 7, 10] },
+  { id: "harmonic-minor", category: "Menores", name: "Menor armónica", intervals: [0, 2, 3, 5, 7, 8, 11] },
+  { id: "melodic-minor", category: "Menores", name: "Menor melódica", intervals: [0, 2, 3, 5, 7, 9, 11] },
+  { id: "double-harmonic", category: "Medio Oriente", name: "Doble armónica (bizantina/árabe)", intervals: [0, 1, 4, 5, 7, 8, 11] },
+  { id: "phrygian-dominant", category: "Medio Oriente", name: "Frigia dominante (Hijaz)", intervals: [0, 1, 4, 5, 7, 8, 10] },
+  { id: "hungarian-minor", category: "Húngaras", name: "Húngara menor", intervals: [0, 2, 3, 6, 7, 8, 11] },
+  { id: "hungarian-major", category: "Húngaras", name: "Húngara mayor", intervals: [0, 3, 4, 6, 7, 9, 10] },
+  { id: "chinese-gong", category: "Modos chinos", name: "Gong", intervals: [0, 2, 4, 7, 9] },
+  { id: "chinese-shang", category: "Modos chinos", name: "Shang", intervals: [0, 2, 5, 7, 10] },
+  { id: "chinese-jue", category: "Modos chinos", name: "Jue", intervals: [0, 3, 5, 8, 10] },
+  { id: "chinese-zhi", category: "Modos chinos", name: "Zhi", intervals: [0, 2, 5, 7, 9] },
+  { id: "chinese-yu", category: "Modos chinos", name: "Yu", intervals: [0, 3, 5, 7, 10] },
+  { id: "whole-tone", category: "Simétricas", name: "Tonos enteros", intervals: [0, 2, 4, 6, 8, 10] },
+  { id: "octatonic", category: "Simétricas", name: "Octatónica (semitono-tono)", intervals: [0, 1, 3, 4, 6, 7, 9, 10] },
+] as const;
+
+type ScalePresetId = (typeof SCALE_PRESETS)[number]["id"];
+
+const PENTATONIC_HARMONY: Partial<Record<ScalePresetId, ScalePresetId>> = {
+  "major-pentatonic": "major",
+  "minor-pentatonic": "minor",
+  blues: "minor",
+  "hungarian-minor": "harmonic-minor",
+  "hungarian-major": "mixolydian",
+  "chinese-gong": "major",
+  "chinese-shang": "dorian",
+  "chinese-jue": "phrygian",
+  "chinese-zhi": "mixolydian",
+  "chinese-yu": "minor",
+};
+
+const SCALE_CATEGORIES = [...new Set(SCALE_PRESETS.map((preset) => preset.category))];
+
+const generateScaleNotes = (root: string, presetId: ScalePresetId): string[] => {
+  const rootIndex = noteToSemits[root];
+  const preset = SCALE_PRESETS.find((item) => item.id === presetId);
+  if (rootIndex === undefined || !preset) return [];
+  return preset.intervals.map(
+    (interval) => CHROMATIC_NOTES[(rootIndex + interval) % 12],
+  );
+};
 
 const INSTRUMENTS = [
   {
@@ -266,6 +311,9 @@ function App() {
     localStorage.getItem("current_scale_root") ||
     "",
   );
+  const [selectedScalePreset, setSelectedScalePreset] = useState<ScalePresetId>(
+    "major",
+  );
   const scaleQueryReadyRef = useRef(false);
   const [parsedNotes, setParsedNotes] = useState<string[]>([]);
   const scaleRoot = parsedNotes.includes(selectedScaleRoot)
@@ -276,6 +324,28 @@ function App() {
     if (rootIndex <= 0) return parsedNotes;
     return [...parsedNotes.slice(rootIndex), ...parsedNotes.slice(0, rootIndex)];
   }, [parsedNotes, scaleRoot]);
+  const activePresetNotes = useMemo(
+    () => generateScaleNotes(scaleRoot, selectedScalePreset),
+    [scaleRoot, selectedScalePreset],
+  );
+  const isSelectedPresetActive =
+    activePresetNotes.join(" ") === orderedScaleNotes.join(" ");
+  const harmonyPresetId = isSelectedPresetActive
+    ? PENTATONIC_HARMONY[selectedScalePreset] || null
+    : null;
+  const harmonyScaleName = harmonyPresetId
+    ? SCALE_PRESETS.find((preset) => preset.id === harmonyPresetId)?.name || null
+    : null;
+  const chordScaleNotes = useMemo(() => {
+    if (!harmonyPresetId) return orderedScaleNotes;
+    return generateScaleNotes(scaleRoot, harmonyPresetId);
+  }, [harmonyPresetId, orderedScaleNotes, scaleRoot]);
+  const applyScalePreset = (root: string, presetId: ScalePresetId) => {
+    const notes = generateScaleNotes(root, presetId);
+    setSelectedScaleRoot(root);
+    setSelectedScalePreset(presetId);
+    setRawInput(notes.join(" "));
+  };
   const [chords, setChords] = useState<ChordInfo[]>([]);
   const [selectedChord, setSelectedChord] = useState<ChordInfo | null>(null);
   const [audioState, setAudioState] = useState(false);
@@ -522,8 +592,9 @@ function App() {
 
   // Build diatonic triads or seventh chords when parsed notes or mode changes
   useEffect(() => {
-    const N = orderedScaleNotes.length;
-    const minNotes = showSevenths ? 4 : 3;
+    const N = chordScaleNotes.length;
+    const canBuildSevenths = showSevenths && N >= 7;
+    const minNotes = canBuildSevenths ? 4 : 3;
     if (N < minNotes) {
       setChords([]);
       setSelectedChord(null);
@@ -533,9 +604,9 @@ function App() {
     const detectedChords: ChordInfo[] = [];
 
     for (let i = 0; i < N; i++) {
-      const root = orderedScaleNotes[i];
-      const third = orderedScaleNotes[(i + 2) % N];
-      const fifth = orderedScaleNotes[(i + 4) % N];
+      const root = chordScaleNotes[i];
+      const third = chordScaleNotes[(i + 2) % N];
+      const fifth = chordScaleNotes[(i + 4) % N];
 
       const rSem = noteToSemits[root] ?? 0;
       const tSem = noteToSemits[third] ?? 0;
@@ -544,8 +615,8 @@ function App() {
       const interval3 = (tSem - rSem + 12) % 12;
       const interval5 = (fSem - rSem + 12) % 12;
 
-      if (showSevenths) {
-        const seventh = orderedScaleNotes[(i + 6) % N];
+      if (canBuildSevenths) {
+        const seventh = chordScaleNotes[(i + 6) % N];
         const sSem = noteToSemits[seventh] ?? 0;
         const interval7 = (sSem - rSem + 12) % 12;
 
@@ -606,7 +677,7 @@ function App() {
     }
 
     setSelectedChord(chordToSelect);
-  }, [orderedScaleNotes, showSevenths]);
+  }, [chordScaleNotes, showSevenths]);
 
   // Internal helper: triggers notes as chord or arpeggio depending on playMode
   const triggerNotes = async (notes: string[]) => {
@@ -842,41 +913,60 @@ function App() {
                   </span>
                 )}
               </div>
-              <label className="scale-root-control">
-                <span>Nota raíz</span>
-                <select
-                  value={scaleRoot}
-                  onChange={(event) => setSelectedScaleRoot(event.target.value)}
-                  disabled={parsedNotes.length === 0}
-                  aria-label="Seleccionar nota raíz de la escala"
-                >
-                  {parsedNotes.map((note) => (
-                    <option key={note} value={note}>{note}</option>
-                  ))}
-                </select>
-              </label>
             </section>
 
             <section className="scale-block" aria-labelledby="scale-presets-title">
               <h3 id="scale-presets-title">Presets de Escalas</h3>
-              <div className="presets-container">
-                {PRESETS.map((preset) => {
-                  const isActive = rawInput === preset.notes;
-                  return (
-                    <button
-                      key={preset.name}
-                      className={`preset-btn ${isActive ? "active" : ""}`}
-                      onClick={() => {
-                        setRawInput(preset.notes);
-                        setSelectedScaleRoot(preset.notes.split(/\s+/)[0]);
-                      }}
-                      aria-label={`Aplicar escala ${preset.name}`}
-                    >
-                      {preset.name}
-                    </button>
-                  );
-                })}
+              <div className="scale-preset-controls">
+                <label>
+                  <span>Nota raíz</span>
+                  <select
+                    value={scaleRoot}
+                    onChange={(event) =>
+                      applyScalePreset(event.target.value, selectedScalePreset)
+                    }
+                    aria-label="Seleccionar nota raíz de la escala"
+                  >
+                    {CHROMATIC_NOTES.map((note) => (
+                      <option key={note} value={note}>{note}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Tipo de escala</span>
+                  <select
+                    value={selectedScalePreset}
+                    onChange={(event) =>
+                      applyScalePreset(scaleRoot || "C", event.target.value as ScalePresetId)
+                    }
+                    aria-label="Seleccionar tipo de escala"
+                  >
+                    {SCALE_CATEGORIES.map((category) => (
+                      <optgroup key={category} label={category}>
+                        {SCALE_PRESETS.filter(
+                          (preset) => preset.category === category,
+                        ).map((preset) => (
+                          <option key={preset.id} value={preset.id}>
+                            {scaleRoot || "C"} {preset.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </label>
               </div>
+              {harmonyScaleName && (
+                <p className="preset-harmony-help">
+                  Los acordes se derivan de la escala {scaleRoot} {harmonyScaleName};
+                  los instrumentos conservan las notas de la escala seleccionada.
+                </p>
+              )}
+              {isSelectedPresetActive && selectedScalePreset === "whole-tone" && (
+                <p className="preset-harmony-help">
+                  La escala de tonos enteros genera tríadas aumentadas. El modo de
+                  séptimas no se aplica porque la escala tiene seis grados.
+                </p>
+              )}
             </section>
           </div>
         </CollapsiblePanel>
