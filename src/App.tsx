@@ -8,15 +8,14 @@ import {
   Info,
   Sparkles,
   Loader2,
-  Maximize2,
-  Minimize2,
   List,
-  Settings,
 } from "lucide-react";
 import { ChordCard } from "./components/ChordCard";
 import { CollapsiblePanel } from "./components/CollapsiblePanel";
 import { GuitarDiagram, ScaleFretboard } from "./components/GuitarDiagram";
 import { AudioControlsModal } from "./components/AudioControlsModal";
+import { AppFooter } from "./components/AppFooter";
+import { AppHeader } from "./components/AppHeader";
 import {
   getGuitarPositions,
   transposeNote,
@@ -788,35 +787,11 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="app-navbar">
-        <div className="app-navbar__inner">
-          <div className="app-brand">
-            <div className="logo-icon">
-              <Music size={24} aria-hidden="true" />
-            </div>
-            <span>Progression Finder</span>
-          </div>
-          <div className="navbar-actions">
-            <button
-              className="global-btn audio-settings-btn"
-              onClick={() => setAudioModalOpen(true)}
-              aria-label="Abrir controles de audio"
-              title="Controles de Audio"
-            >
-              <Settings size={17} />
-              <span>Audio</span>
-            </button>
-            <button
-              className={`global-btn ${compactMode ? "active" : ""}`}
-              onClick={() => setCompactMode(!compactMode)}
-              aria-label="Alternar modo compacto"
-            >
-              {compactMode ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
-              <span>Modo compacto</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      <AppHeader
+        compactMode={compactMode}
+        onToggleCompactMode={() => setCompactMode(!compactMode)}
+        onOpenAudioSettings={() => setAudioModalOpen(true)}
+      />
 
       <main className="container">
         {/* Scale notes and presets */}
@@ -1503,27 +1478,8 @@ function App() {
           )}
         </div>
 
-        <footer className="app-footer">
-          <div>
-            <strong>Progression Finder</strong> &copy;{" "}
-            {new Date().getFullYear()}
-          </div>
-          <div>
-            Desarrollado con React, TypeScript y Tone.js para una experiencia
-            auditiva interactiva.
-          </div>
-          <div>
-            Autor Esteban Funkmasta, Instagram{" "}
-            <a
-              target="_blank"
-              rel="noreferrer"
-              href="https://www.instagram.com/estebanfunkmasta/"
-            >
-              @EstebanFunkmasta
-            </a>
-          </div>
-        </footer>
       </main>
+      <AppFooter />
     </div>
   );
 }

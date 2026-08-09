@@ -898,12 +898,24 @@
 
 /* Footer styling */
 .app-footer {
+  position: relative;
+  width: 100%;
+  margin-top: 2.5rem;
+  background: rgba(9, 10, 15, 0.86);
+  border-top: 1px solid var(--border-color);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.app-footer__inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+  box-sizing: border-box;
   text-align: center;
   color: var(--text-muted);
   font-size: 0.85rem;
-  margin-top: auto;
-  padding: 2.5rem 0 1rem;
-  border-top: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
