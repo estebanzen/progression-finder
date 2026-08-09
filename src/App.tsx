@@ -17,6 +17,13 @@ import { AudioControlsModal } from "./components/AudioControlsModal";
 import { AppFooter } from "./components/AppFooter";
 import { AppHeader } from "./components/AppHeader";
 import {
+  BLACK_KEYS,
+  CHORD_BLACK_KEYS,
+  CHORD_WHITE_KEYS,
+  PianoKeyboard,
+  WHITE_KEYS,
+} from "./components/PianoKeyboard";
+import {
   getGuitarPositions,
   transposeNote,
   getGuitarVoicing,
@@ -25,6 +32,14 @@ import { exportChordDiagram, exportScaleFretboard } from "./utils/exportDiagram"
 import { detectChordFormula, type ChordQuality } from "./utils/chordDetector";
 import { usePersistentPanelState } from "./hooks/usePersistentPanelState";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import {
+  CHROMATIC_NOTES,
+  generateScaleNotes,
+  SCALE_CATEGORIES,
+  SCALE_HARMONY,
+  SCALE_PRESETS,
+  type ScalePresetId,
+} from "./utils/scalePresets";
 import "./App.css";
 
 const BASE_URL = import.meta.env.BASE_URL;
@@ -163,102 +178,6 @@ export interface ChordInfo {
   isSeventhChord?: boolean;
 }
 
-// 2-Octave Piano Setup (C4 to B5)
-const WHITE_KEYS = [
-  "C4",
-  "D4",
-  "E4",
-  "F4",
-  "G4",
-  "A4",
-  "B4",
-  "C5",
-  "D5",
-  "E5",
-  "F5",
-  "G5",
-  "A5",
-  "B5",
-];
-
-const BLACK_KEYS = [
-  { note: "C#4", left: 4.74 },
-  { note: "D#4", left: 11.88 },
-  { note: "F#4", left: 26.17 },
-  { note: "G#4", left: 33.31 },
-  { note: "A#4", left: 40.45 },
-  { note: "C#5", left: 54.74 },
-  { note: "D#5", left: 61.88 },
-  { note: "F#5", left: 76.17 },
-  { note: "G#5", left: 83.31 },
-  { note: "A#5", left: 90.45 },
-];
-
-const CHORD_WHITE_KEYS = WHITE_KEYS.slice(0, 7);
-const CHORD_BLACK_KEYS = [
-  { note: "C#4", left: 9.49 },
-  { note: "D#4", left: 23.77 },
-  { note: "F#4", left: 52.35 },
-  { note: "G#4", left: 66.63 },
-  { note: "A#4", left: 80.92 },
-];
-
-const CHROMATIC_NOTES = [
-  "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
-] as const;
-
-const SCALE_PRESETS = [
-  { id: "major", category: "Modos griegos", name: "Mayor (Jónica)", intervals: [0, 2, 4, 5, 7, 9, 11] },
-  { id: "dorian", category: "Modos griegos", name: "Dórica", intervals: [0, 2, 3, 5, 7, 9, 10] },
-  { id: "phrygian", category: "Modos griegos", name: "Frigia", intervals: [0, 1, 3, 5, 7, 8, 10] },
-  { id: "lydian", category: "Modos griegos", name: "Lidia", intervals: [0, 2, 4, 6, 7, 9, 11] },
-  { id: "mixolydian", category: "Modos griegos", name: "Mixolidia", intervals: [0, 2, 4, 5, 7, 9, 10] },
-  { id: "minor", category: "Modos griegos", name: "Menor natural (Eólica)", intervals: [0, 2, 3, 5, 7, 8, 10] },
-  { id: "locrian", category: "Modos griegos", name: "Locria", intervals: [0, 1, 3, 5, 6, 8, 10] },
-  { id: "major-pentatonic", category: "Pentatónicas", name: "Pentatónica mayor", intervals: [0, 2, 4, 7, 9] },
-  { id: "minor-pentatonic", category: "Pentatónicas", name: "Pentatónica menor", intervals: [0, 3, 5, 7, 10] },
-  { id: "blues", category: "Pentatónicas", name: "Blues", intervals: [0, 3, 5, 6, 7, 10] },
-  { id: "harmonic-minor", category: "Menores", name: "Menor armónica", intervals: [0, 2, 3, 5, 7, 8, 11] },
-  { id: "melodic-minor", category: "Menores", name: "Menor melódica", intervals: [0, 2, 3, 5, 7, 9, 11] },
-  { id: "double-harmonic", category: "Medio Oriente", name: "Doble armónica (bizantina/árabe)", intervals: [0, 1, 4, 5, 7, 8, 11] },
-  { id: "phrygian-dominant", category: "Medio Oriente", name: "Frigia dominante (Hijaz)", intervals: [0, 1, 4, 5, 7, 8, 10] },
-  { id: "hungarian-minor", category: "Húngaras", name: "Húngara menor", intervals: [0, 2, 3, 6, 7, 8, 11] },
-  { id: "hungarian-major", category: "Húngaras", name: "Húngara mayor", intervals: [0, 3, 4, 6, 7, 9, 10] },
-  { id: "chinese-gong", category: "Modos chinos", name: "Gong", intervals: [0, 2, 4, 7, 9] },
-  { id: "chinese-shang", category: "Modos chinos", name: "Shang", intervals: [0, 2, 5, 7, 10] },
-  { id: "chinese-jue", category: "Modos chinos", name: "Jue", intervals: [0, 3, 5, 8, 10] },
-  { id: "chinese-zhi", category: "Modos chinos", name: "Zhi", intervals: [0, 2, 5, 7, 9] },
-  { id: "chinese-yu", category: "Modos chinos", name: "Yu", intervals: [0, 3, 5, 7, 10] },
-  { id: "whole-tone", category: "Simétricas", name: "Tonos enteros", intervals: [0, 2, 4, 6, 8, 10] },
-  { id: "octatonic", category: "Simétricas", name: "Octatónica (semitono-tono)", intervals: [0, 1, 3, 4, 6, 7, 9, 10] },
-] as const;
-
-type ScalePresetId = (typeof SCALE_PRESETS)[number]["id"];
-
-const PENTATONIC_HARMONY: Partial<Record<ScalePresetId, ScalePresetId>> = {
-  "major-pentatonic": "major",
-  "minor-pentatonic": "minor",
-  blues: "minor",
-  "hungarian-minor": "harmonic-minor",
-  "hungarian-major": "mixolydian",
-  "chinese-gong": "major",
-  "chinese-shang": "dorian",
-  "chinese-jue": "phrygian",
-  "chinese-zhi": "mixolydian",
-  "chinese-yu": "minor",
-};
-
-const SCALE_CATEGORIES = [...new Set(SCALE_PRESETS.map((preset) => preset.category))];
-
-const generateScaleNotes = (root: string, presetId: ScalePresetId): string[] => {
-  const rootIndex = noteToSemits[root];
-  const preset = SCALE_PRESETS.find((item) => item.id === presetId);
-  if (rootIndex === undefined || !preset) return [];
-  return preset.intervals.map(
-    (interval) => CHROMATIC_NOTES[(rootIndex + interval) % 12],
-  );
-};
-
 const INSTRUMENTS = [
   {
     id: "piano",
@@ -309,65 +228,6 @@ const SAMPLER_URLS = {
 
 type PlayMode = "chord" | "arpeggio";
 
-interface PianoKeyboardProps {
-  whiteKeys: string[];
-  blackKeys: Array<{ note: string; left: number }>;
-  isActive: (note: string) => boolean;
-  isRoot: (note: string) => boolean;
-  onPlay: (note: string) => void;
-  compact?: boolean;
-}
-
-function PianoKeyboard({
-  whiteKeys,
-  blackKeys,
-  isActive,
-  isRoot,
-  onPlay,
-  compact = false,
-}: PianoKeyboardProps) {
-  return (
-    <div className={`piano-keys-wrapper ${compact ? "compact" : ""}`}>
-      <div className="piano-white-keys">
-        {whiteKeys.map((keyNote) => {
-          const active = isActive(keyNote);
-          const root = active && isRoot(keyNote);
-          return (
-            <button
-              type="button"
-              key={keyNote}
-              className={`piano-key-white ${active ? "active" : ""} ${root ? "root" : ""}`}
-              onClick={() => onPlay(keyNote)}
-              aria-label={`Tocar ${keyNote}`}
-              title={`Tocar ${keyNote}`}
-            >
-              <span className="key-note-label">{keyNote.replace(/\d+$/, "")}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {blackKeys.map(({ note, left }) => {
-        const active = isActive(note);
-        const root = active && isRoot(note);
-        return (
-          <button
-            type="button"
-            key={note}
-            className={`piano-key-black ${active ? "active" : ""} ${root ? "root" : ""}`}
-            style={{ left: `${left}%` }}
-            onClick={() => onPlay(note)}
-            aria-label={`Tocar ${note}`}
-            title={`Tocar ${note}`}
-          >
-            <span className="key-note-label">{note.replace(/\d+$/, "")}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 function App() {
   const [rawInput, setRawInput] = useState(() => {
     const queryNotes = new URLSearchParams(window.location.search).get("notes");
@@ -399,7 +259,7 @@ function App() {
   const isSelectedPresetActive =
     activePresetNotes.join(" ") === orderedScaleNotes.join(" ");
   const harmonyPresetId = isSelectedPresetActive
-    ? PENTATONIC_HARMONY[selectedScalePreset] || null
+    ? SCALE_HARMONY[selectedScalePreset] || null
     : null;
   const harmonyScaleName = harmonyPresetId
     ? SCALE_PRESETS.find((preset) => preset.id === harmonyPresetId)?.name || null
