@@ -790,13 +790,21 @@
 }
 
 .piano-key-black.active {
-  background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
-  /* blue */
-  border-bottom-color: #1e3a8a;
+  background: linear-gradient(to bottom, #8b5cf6, #a855f7);
+  border-bottom-color: #6d28d9;
   box-shadow:
     inset 0 -6px 0 rgba(0, 0, 0, 0.3),
-    0 0 15px rgba(59, 130, 246, 0.7);
+    0 0 15px rgba(168, 85, 247, 0.75);
   z-index: 11;
+}
+
+.piano-key-white.root,
+.piano-key-black.root {
+  background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+  border-bottom-color: #1e3a8a;
+  box-shadow:
+    inset 0 -6px 0 rgba(0, 0, 0, 0.25),
+    0 0 18px rgba(59, 130, 246, 0.8);
 }
 
 .key-note-label {
@@ -1433,6 +1441,46 @@
   padding: 1.4rem 0.5rem 1rem 0;
 }
 
+.note-badge.root {
+  background: var(--accent-purple-glow);
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.22);
+}
+
+.note-badge.root::after {
+  content: "raíz";
+  margin-left: 0.25rem;
+  color: var(--accent-purple);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.scale-root-control {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: fit-content;
+  margin-top: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.scale-root-control select {
+  min-width: 72px;
+  padding: 0.4rem 1.8rem 0.4rem 0.65rem;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+}
+
+.scale-root-control select option {
+  color: #f4f4f5;
+  background: #11121d;
+}
+
 .chord-card.augmented,
 .chord-card.augmented-major {
   --chord-accent: #22d3ee;
@@ -1632,6 +1680,10 @@
   box-shadow: 0 0 8px var(--accent-purple-glow);
   transform: translate(-50%, -50%);
   z-index: 2;
+}
+
+.root-note {
+  box-shadow: 0 0 0 2px white;
 }
 
 @media (max-width: 850px) {

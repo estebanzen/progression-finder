@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import * as Tone from "tone";
 import {
   Music,
@@ -262,8 +262,21 @@ function App() {
     if (queryNotes?.trim()) return queryNotes;
     return localStorage.getItem("current_scale_notes") || "C D E F G A B";
   });
+  const [selectedScaleRoot, setSelectedScaleRoot] = useState(() =>
+    new URLSearchParams(window.location.search).get("root") ||
+    localStorage.getItem("current_scale_root") ||
+    "",
+  );
   const scaleQueryReadyRef = useRef(false);
   const [parsedNotes, setParsedNotes] = useState<string[]>([]);
+  const scaleRoot = parsedNotes.includes(selectedScaleRoot)
+    ? selectedScaleRoot
+    : parsedNotes[0] || "";
+  const orderedScaleNotes = useMemo(() => {
+    const rootIndex = parsedNotes.indexOf(scaleRoot);
+    if (rootIndex <= 0) return parsedNotes;
+    return [...parsedNotes.slice(rootIndex), ...parsedNotes.slice(0, rootIndex)];
+  }, [parsedNotes, scaleRoot]);
   const [chords, setChords] = useState<ChordInfo[]>([]);
   const [selectedChord, setSelectedChord] = useState<ChordInfo | null>(null);
   const [audioState, setAudioState] = useState(false);
@@ -290,13 +303,19 @@ function App() {
   }, [rawInput]);
 
   useEffect(() => {
+    if (scaleRoot) localStorage.setItem("current_scale_root", scaleRoot);
+  }, [scaleRoot]);
+
+  useEffect(() => {
     const handlePopState = () => {
       const queryNotes = new URLSearchParams(window.location.search).get("notes");
+      const queryRoot = new URLSearchParams(window.location.search).get("root");
       setRawInput(
         queryNotes?.trim() ||
           localStorage.getItem("current_scale_notes") ||
           "C D E F G A B",
       );
+      setSelectedScaleRoot(queryRoot || "");
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -494,15 +513,17 @@ function App() {
     const url = new URL(window.location.href);
     if (parsedNotes.length > 0) {
       url.searchParams.set("notes", parsedNotes.join(","));
+      url.searchParams.set("root", scaleRoot);
     } else {
       url.searchParams.delete("notes");
+      url.searchParams.delete("root");
     }
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [parsedNotes]);
+  }, [parsedNotes, scaleRoot]);
 
   // Build diatonic triads or seventh chords when parsed notes or mode changes
   useEffect(() => {
-    const N = parsedNotes.length;
+    const N = orderedScaleNotes.length;
     const minNotes = showSevenths ? 4 : 3;
     if (N < minNotes) {
       setChords([]);
@@ -513,9 +534,9 @@ function App() {
     const detectedChords: ChordInfo[] = [];
 
     for (let i = 0; i < N; i++) {
-      const root = parsedNotes[i];
-      const third = parsedNotes[(i + 2) % N];
-      const fifth = parsedNotes[(i + 4) % N];
+      const root = orderedScaleNotes[i];
+      const third = orderedScaleNotes[(i + 2) % N];
+      const fifth = orderedScaleNotes[(i + 4) % N];
 
       const rSem = noteToSemits[root] ?? 0;
       const tSem = noteToSemits[third] ?? 0;
@@ -525,7 +546,7 @@ function App() {
       const interval5 = (fSem - rSem + 12) % 12;
 
       if (showSevenths) {
-        const seventh = parsedNotes[(i + 6) % N];
+        const seventh = orderedScaleNotes[(i + 6) % N];
         const sSem = noteToSemits[seventh] ?? 0;
         const interval7 = (sSem - rSem + 12) % 12;
 
@@ -586,7 +607,7 @@ function App() {
     }
 
     setSelectedChord(chordToSelect);
-  }, [parsedNotes, showSevenths]);
+  }, [orderedScaleNotes, showSevenths]);
 
   // Internal helper: triggers notes as chord or arpeggio depending on playMode
   const triggerNotes = async (notes: string[]) => {
@@ -759,6 +780,12 @@ function App() {
     });
   };
 
+  const isKeyRoot = (keyNote: string): boolean => {
+    if (!explorationChord) return false;
+    const keyPitchClass = keyNote.replace(/\d+$/, "");
+    return noteToSemits[keyPitchClass] === noteToSemits[explorationChord.root];
+  };
+
   return (
     <div className="app-shell">
       <header className="app-navbar">
@@ -826,7 +853,11 @@ function App() {
               <div className="parsed-notes-list">
                 {parsedNotes.length > 0 ? (
                   parsedNotes.map((note, idx) => (
-                    <span key={`${note}-${idx}`} className="note-badge">
+                    <span
+                      key={`${note}-${idx}`}
+                      className={`note-badge ${note === scaleRoot ? "root" : ""}`}
+                      title={note === scaleRoot ? "Nota raíz" : undefined}
+                    >
                       {note}
                     </span>
                   ))
@@ -836,6 +867,19 @@ function App() {
                   </span>
                 )}
               </div>
+              <label className="scale-root-control">
+                <span>Nota raíz</span>
+                <select
+                  value={scaleRoot}
+                  onChange={(event) => setSelectedScaleRoot(event.target.value)}
+                  disabled={parsedNotes.length === 0}
+                  aria-label="Seleccionar nota raíz de la escala"
+                >
+                  {parsedNotes.map((note) => (
+                    <option key={note} value={note}>{note}</option>
+                  ))}
+                </select>
+              </label>
             </section>
 
             <section className="scale-block" aria-labelledby="scale-presets-title">
@@ -847,7 +891,10 @@ function App() {
                     <button
                       key={preset.name}
                       className={`preset-btn ${isActive ? "active" : ""}`}
-                      onClick={() => setRawInput(preset.notes)}
+                      onClick={() => {
+                        setRawInput(preset.notes);
+                        setSelectedScaleRoot(preset.notes.split(/\s+/)[0]);
+                      }}
                       aria-label={`Aplicar escala ${preset.name}`}
                     >
                       {preset.name}
@@ -1289,11 +1336,12 @@ function App() {
                         </div>
                       </div>
                       <div className="guitar-visuals">
-                        <GuitarDiagram
-                          position={positions[currentPosIdx]}
-                          chordName={explorationChord.name}
-                        />
-                        <ScaleFretboard notes={parsedNotes} />
+                          <GuitarDiagram
+                            position={positions[currentPosIdx]}
+                            chordName={explorationChord.name}
+                            rootNote={explorationChord.root}
+                          />
+                        <ScaleFretboard notes={parsedNotes} rootNote={scaleRoot} />
                       </div>
 
                       <div className="guitar-export-container">
@@ -1384,11 +1432,12 @@ function App() {
                     <div className="piano-white-keys">
                       {WHITE_KEYS.map((keyNote) => {
                         const active = isKeyActive(keyNote);
+                        const root = active && isKeyRoot(keyNote);
                         const keyPC = keyNote.slice(0, -1);
                         return (
                           <div
                             key={keyNote}
-                            className={`piano-key-white ${active ? "active" : ""}`}
+                            className={`piano-key-white ${active ? "active" : ""} ${root ? "root" : ""}`}
                             onClick={() => handlePlayKey(keyNote)}
                             title={`Tocar ${keyNote}`}
                           >
@@ -1401,11 +1450,12 @@ function App() {
                     {/* Black keys */}
                     {BLACK_KEYS.map((keyObj) => {
                       const active = isKeyActive(keyObj.note);
+                      const root = active && isKeyRoot(keyObj.note);
                       const keyPC = keyObj.note.slice(0, -1);
                       return (
                         <div
                           key={keyObj.note}
-                          className={`piano-key-black ${active ? "active" : ""}`}
+                          className={`piano-key-black ${active ? "active" : ""} ${root ? "root" : ""}`}
                           style={{ left: `${keyObj.left}%` }}
                           onClick={() => handlePlayKey(keyObj.note)}
                           title={`Tocar ${keyObj.note}`}
@@ -1463,12 +1513,13 @@ function App() {
             auditiva interactiva.
           </div>
           <div>
-            Autor Esteban Zen, repositorio{" "}
+            Autor Esteban Funkmasta, Instagram{" "}
             <a
               target="_blank"
-              href="https://github.com/estebanzen/progression-finder"
+              rel="noreferrer"
+              href="https://www.instagram.com/estebanfunkmasta/"
             >
-              https://github.com/estebanzen/progression-finder
+              @EstebanFunkmasta
             </a>
           </div>
         </footer>

@@ -2,11 +2,13 @@ import React from 'react';
 import type { ChordPosition } from '../utils/guitarChords';
 
 const OPEN_STRING_NOTES = [4, 11, 7, 2, 9, 4]; // e, B, G, D, A, E
+const CHORD_OPEN_STRING_NOTES = [4, 9, 2, 7, 11, 4]; // E, A, D, G, B, e
 const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
 const FRET_MARKERS = [3, 5, 7, 12, 15];
 
 interface ScaleFretboardProps {
   notes: string[];
+  rootNote?: string;
   fretCount?: number;
 }
 
@@ -23,11 +25,13 @@ const noteToPitchClass = (note: string): number | null => {
 
 export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   notes,
+  rootNote,
   fretCount = 15,
 }) => {
   const selectedPitchClasses = new Set(
     notes.map(noteToPitchClass).filter((note): note is number => note !== null),
   );
+  const rootPitchClass = rootNote ? noteToPitchClass(rootNote) : null;
 
   return (
     <div className="scale-fretboard-section">
@@ -67,7 +71,13 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
                       className={`scale-fret ${fret === 0 ? 'open-fret' : ''}`}
                       key={fret}
                     >
-                      {isSelected && <span className="scale-note-dot" />}
+                      {isSelected && (
+                        <span
+                          className={`scale-note-dot ${
+                            rootPitchClass === (openNote + fret) % 12 ? 'root-note' : ''
+                          }`}
+                        />
+                      )}
                     </div>
                   );
                 })}
@@ -83,12 +93,18 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
 interface GuitarDiagramProps {
   position: ChordPosition;
   chordName: string;
+  rootNote: string;
 }
 
-export const GuitarDiagram: React.FC<GuitarDiagramProps> = ({ position, chordName }) => {
+export const GuitarDiagram: React.FC<GuitarDiagramProps> = ({
+  position,
+  chordName,
+  rootNote,
+}) => {
   const { frets, baseFret } = position;
   const numFrets = 4;
   const stringNames = ['E', 'A', 'D', 'G', 'B', 'e'];
+  const rootPitchClass = noteToPitchClass(rootNote);
 
   // Adjust frets for display if not open position
   const displayFrets = frets.map(f => {
@@ -136,7 +152,12 @@ export const GuitarDiagram: React.FC<GuitarDiagramProps> = ({ position, chordNam
             return (
               <div
                 key={i}
-                className="fret-dot"
+                className={`fret-dot ${
+                  rootPitchClass ===
+                  (CHORD_OPEN_STRING_NOTES[i] + Number(frets[i])) % 12
+                    ? 'root-note'
+                    : ''
+                }`}
                 style={{
                   left: `${leftPos}%`,
                   top: `${topPos}%`
