@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { getVoicedNotesForChord } from './utils/chordPlayback';
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import * as Tone from "tone";
 import {
   Music,
@@ -11,6 +12,15 @@ import {
   List,
 } from "lucide-react";
 import { ChordCard } from "./components/ChordCard";
+import { ProgressionAnalyzer } from "./components/ProgressionAnalyzer";
+import { ProgressionSuggestions } from "./components/ProgressionSuggestions";
+import { useProgression } from "./hooks/useProgression";
+import { useChordPlayback } from "./hooks/useChordPlayback";
+import { editProgression, insertProgression, type ProgressionState } from "./utils/progressionState";
+import { getContextualChordSuggestions, getContextualProgressionVariants, type ContextualChordSuggestion } from "./utils/contextualChordSuggestions";
+import { pitchClass } from "./utils/noteSpelling";
+import type { ChordInfo } from "./utils/chordTypes";
+import { PwaControls } from "./components/PwaControls";
 import { CollapsiblePanel } from "./components/CollapsiblePanel";
 import { GuitarDiagram, ScaleFretboard } from "./components/GuitarDiagram";
 import { AudioControlsModal } from "./components/AudioControlsModal";
@@ -20,9 +30,9 @@ import {
   BLACK_KEYS,
   CHORD_BLACK_KEYS,
   CHORD_WHITE_KEYS,
-  PianoKeyboard,
   WHITE_KEYS,
-} from "./components/PianoKeyboard";
+} from "./utils/pianoKeys";
+import { PianoKeyboard } from "./components/PianoKeyboard";
 import {
   getGuitarPositions,
   transposeNote,
@@ -44,38 +54,18 @@ import "./App.css";
 
 const BASE_URL = import.meta.env.BASE_URL;
 // Pitch class map to calculate intervals
-const noteToSemits: Record<string, number> = {
-  C: 0,
-  "C#": 1,
-  Db: 1,
-  D: 2,
-  "D#": 3,
-  Eb: 3,
-  E: 4,
-  Fb: 4,
-  "E#": 5,
-  F: 5,
-  "F#": 6,
-  Gb: 6,
-  G: 7,
-  "G#": 8,
-  Ab: 8,
-  A: 9,
-  "A#": 10,
-  Bb: 10,
-  B: 11,
-  Cb: 11,
-  "B#": 0,
-};
+const noteToSemits: Record<string, number> = Object.fromEntries(
+  ['C', 'D', 'E', 'F', 'G', 'A', 'B'].flatMap(letter => ['', '#', 'b', '##', 'bb'].map(accidental => [letter + accidental, pitchClass(letter + accidental)])),
+);
 
 // Normalize input notes (supports C, C#, Db, c, c#, db, etc.)
 const normalizeNote = (noteStr: string): string | null => {
   const cleaned = noteStr.trim();
   if (!cleaned) return null;
-  const match = cleaned.match(/^([a-gA-G])(#|b)?$/);
+  const match = cleaned.match(/^([a-gA-G])(#{1,2}|b{1,2})?$/);
   if (!match) return null;
   const base = match[1].toUpperCase();
-  const accidental = match[2] ? (match[2] === "#" ? "#" : "b") : "";
+  const accidental = match[2] ?? "";
   return base + accidental;
 };
 
@@ -148,36 +138,6 @@ const getVoicedNotesseventh = (
   ];
 };
 
-// Recompute voiced notes for a chord at a given baseOctave (for playback only)
-const getVoicedNotesForChord = (
-  chord: ChordInfo,
-  baseOctave: number,
-): string[] => {
-  if (chord.isSeventhChord && chord.seventh) {
-    return getVoicedNotesseventh(
-      chord.root,
-      chord.third,
-      chord.fifth,
-      chord.seventh,
-      baseOctave,
-    );
-  }
-  return getVoicedNotes(chord.root, chord.third, chord.fifth, baseOctave);
-};
-
-export interface ChordInfo {
-  root: string;
-  third: string;
-  fifth: string;
-  seventh?: string;
-  type: ChordQuality;
-  suffix: string;
-  name: string;
-  notes: string[];
-  voicedNotes: string[];
-  isSeventhChord?: boolean;
-}
-
 const INSTRUMENTS = [
   {
     id: "piano",
@@ -229,6 +189,11 @@ const SAMPLER_URLS = {
 type PlayMode = "chord" | "arpeggio";
 
 function App() {
+  const progression = useProgression();
+  const progressionActive = !!progression.analysis;
+  const contextualSuggestions = useMemo(() => progression.analysis ? getContextualChordSuggestions(progression.chords, progression.analysis) : [], [progression.analysis, progression.chords]);
+  const contextualVariants = useMemo(() => progression.analysis ? getContextualProgressionVariants(progression.chords, progression.analysis) : [], [progression.analysis, progression.chords]);
+  const [insertionHistory, setInsertionHistory] = useState<ProgressionState[]>([]);
   const [rawInput, setRawInput] = useState(() => {
     const queryNotes = new URLSearchParams(window.location.search).get("notes");
     if (queryNotes?.trim()) return queryNotes;
@@ -239,14 +204,13 @@ function App() {
     localStorage.getItem("current_scale_root") ||
     "",
   );
-  const [selectedScalePreset, setSelectedScalePreset] = useState<ScalePresetId>(
+  const [manualScalePreset, setSelectedScalePreset] = useState<ScalePresetId>(
     "major",
   );
-  const scaleQueryReadyRef = useRef(false);
-  const [parsedNotes, setParsedNotes] = useState<string[]>([]);
-  const scaleRoot = parsedNotes.includes(selectedScaleRoot)
-    ? selectedScaleRoot
-    : parsedNotes[0] || "";
+  const manualNotes = useMemo(() => [...new Set(rawInput.split(/[\s,;]+/).map(normalizeNote).filter((note): note is string => note !== null))], [rawInput]);
+  const parsedNotes = progression.detectedScale?.notes ?? manualNotes;
+  const selectedScalePreset = progression.detectedScale?.preset ?? manualScalePreset;
+  const scaleRoot = progression.detectedScale?.root ?? (parsedNotes.includes(selectedScaleRoot) ? selectedScaleRoot : parsedNotes[0] || "");
   const orderedScaleNotes = useMemo(() => {
     const rootIndex = parsedNotes.indexOf(scaleRoot);
     if (rootIndex <= 0) return parsedNotes;
@@ -274,8 +238,7 @@ function App() {
     setSelectedScalePreset(presetId);
     setRawInput(notes.join(" "));
   };
-  const [chords, setChords] = useState<ChordInfo[]>([]);
-  const [selectedChord, setSelectedChord] = useState<ChordInfo | null>(null);
+  const [selectedChordName, setSelectedChordName] = useState(() => localStorage.getItem("selected_chord") || "");
   const [audioState, setAudioState] = useState(false);
   const [playMode, setPlayMode] = useLocalStorage<PlayMode>(
     "progressionFinder_playMode",
@@ -323,12 +286,6 @@ function App() {
     localStorage.setItem("selected_octave", baseOctave.toString());
   }, [baseOctave]);
 
-  useEffect(() => {
-    if (selectedChord) {
-      localStorage.setItem("selected_chord", selectedChord.name);
-    }
-  }, [selectedChord]);
-
   const [viewMode, setViewMode] = useLocalStorage(
     "progressionFinder_viewMode",
     "full",
@@ -359,16 +316,8 @@ function App() {
     "panel_guitar_open",
     true,
   );
-  const [explorationChord, setExplorationChord] = useState<ChordInfo | null>(
-    null,
-  );
-  const [selectedPositionIdx, setSelectedPositionIdx] = useState(0);
-
-  // Sync exploration chord with selected grid chord
-  useEffect(() => {
-    setExplorationChord(selectedChord);
-    setSelectedPositionIdx(0);
-  }, [selectedChord]);
+  const [explorationOverride, setExplorationOverride] = useState<{ source: string; chord: ChordInfo; suggestion?: boolean } | null>(null);
+  const [positionSelection, setPositionSelection] = useState<{ source: string; index: number } | null>(null);
 
   const [currentInstrument, setCurrentInstrument] = useState<InstrumentType>(
     () => {
@@ -402,14 +351,14 @@ function App() {
   const activeInstrumentRef = useRef<InstrumentType>(currentInstrument);
   const limiterRef = useRef<Tone.Limiter | null>(null);
 
-  const getLimiter = (): Tone.Limiter => {
+  const getLimiter = useCallback((): Tone.Limiter => {
     if (!limiterRef.current) {
       limiterRef.current = new Tone.Limiter(-1.5).toDestination();
     }
     return limiterRef.current;
-  };
+  }, []);
 
-  const loadInstrument = (instType: InstrumentType) => {
+  const loadInstrument = useCallback(function loadInstrument(instType: InstrumentType) {
     if (samplersRef.current[instType]) {
       setInstrumentLoading(false);
       return;
@@ -458,7 +407,7 @@ function App() {
         setTimeout(() => setInstrumentError(null), 4000);
       },
     });
-  };
+  }, [getLimiter]);
 
   const selectInstrument = (instType: InstrumentType) => {
     activeInstrumentRef.current = instType;
@@ -483,30 +432,15 @@ function App() {
 
   // Load instrument on mount
   useEffect(() => {
-    loadInstrument(currentInstrument);
+    loadInstrument(activeInstrumentRef.current);
+    const samplers = samplersRef.current;
     return () => {
-      Object.values(samplersRef.current).forEach((s) => s?.dispose());
+      Object.values(samplers).forEach((s) => s?.dispose());
       limiterRef.current?.dispose();
     };
-  }, []);
-
-  // Parse notes on input change
-  useEffect(() => {
-    const parts = rawInput.split(/[\s,;]+/);
-    const validNotes: string[] = [];
-    parts.forEach((part) => {
-      const normalized = normalizeNote(part);
-      if (normalized && !validNotes.includes(normalized)) {
-        validNotes.push(normalized);
-      }
-    });
-    scaleQueryReadyRef.current = true;
-    setParsedNotes(validNotes);
-  }, [rawInput]);
+  }, [loadInstrument]);
 
   useEffect(() => {
-    if (!scaleQueryReadyRef.current) return;
-
     const url = new URL(window.location.href);
     if (parsedNotes.length > 0) {
       url.searchParams.set("notes", parsedNotes.join(","));
@@ -515,18 +449,16 @@ function App() {
       url.searchParams.delete("notes");
       url.searchParams.delete("root");
     }
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    if (url.href !== window.location.href) window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   }, [parsedNotes, scaleRoot]);
 
   // Build diatonic triads or seventh chords when parsed notes or mode changes
-  useEffect(() => {
+  const scaleChords = useMemo(() => {
     const N = chordScaleNotes.length;
     const canBuildSevenths = showSevenths && N >= 7;
     const minNotes = canBuildSevenths ? 4 : 3;
     if (N < minNotes) {
-      setChords([]);
-      setSelectedChord(null);
-      return;
+      return [];
     }
 
     const detectedChords: ChordInfo[] = [];
@@ -589,23 +521,34 @@ function App() {
       }
     }
 
-    setChords(detectedChords);
-
-    const savedChordName = localStorage.getItem("selected_chord");
-    let chordToSelect = null;
-
-    if (detectedChords.length > 0) {
-      if (savedChordName) {
-        chordToSelect =
-          detectedChords.find((c) => c.name === savedChordName) ||
-          detectedChords[0];
-      } else {
-        chordToSelect = detectedChords[0];
-      }
-    }
-
-    setSelectedChord(chordToSelect);
+    return detectedChords;
   }, [chordScaleNotes, showSevenths]);
+
+  const chords = progressionActive ? progression.chords : scaleChords;
+  const selectedChord = progressionActive ? progression.selectedChord : chords.find(c => c.name === selectedChordName) ?? chords[0] ?? null;
+  const selectionSource = `${progressionActive ? progression.state.input + ':' + progression.state.selectedIndex : rawInput + ':' + showSevenths}:${selectedChord?.name ?? ''}`;
+  const explorationChord = explorationOverride?.source === selectionSource ? explorationOverride.chord : selectedChord;
+  const positionSource = `${selectionSource}:${explorationChord?.name ?? ''}`;
+  const selectedPositionIdx = positionSelection?.source === positionSource ? positionSelection.index : 0;
+  const setSelectedPositionIdx = (index: number) => setPositionSelection({ source: positionSource, index });
+  const setExplorationChord = (chord: ChordInfo) => setExplorationOverride({ source: selectionSource, chord });
+  const selectProgressionChord = (index: number) => {
+    progression.setState(state => ({ ...state, selectedIndex: index }));
+    setExplorationOverride(null);
+    setPositionSelection(null);
+  };
+  const setSelectedChord = (chord: ChordInfo) => {
+    setSelectedChordName(chord.name);
+    if (progressionActive) {
+      const index = progression.chords.findIndex(c => c === chord || c.name === chord.name);
+      if (index >= 0) selectProgressionChord(index);
+    }
+    setExplorationOverride(null);
+    setPositionSelection(null);
+  };
+  useEffect(() => {
+    if (selectedChord && localStorage.getItem("selected_chord") !== selectedChord.name) localStorage.setItem("selected_chord", selectedChord.name);
+  }, [selectedChord]);
 
   // Internal helper: triggers notes as chord or arpeggio depending on playMode
   const triggerNotes = async (notes: string[]) => {
@@ -623,6 +566,37 @@ function App() {
       sampler.triggerAttackRelease(notes, 1.8);
     }
   };
+
+  const playback = useChordPlayback(async chord => {
+    const sampler = samplersRef.current[activeInstrumentRef.current];
+    if (!sampler?.loaded) throw new Error('Instrumento no disponible');
+    await triggerNotes(getVoicedNotesForChord(chord, baseOctave));
+  }, () => samplersRef.current[activeInstrumentRef.current]?.releaseAll());
+  const changeProgression = (input: string) => { playback.stop(); progression.setState(editProgression(input)); setExplorationOverride(null); setInsertionHistory([]); };
+  const addProgressionChord = (symbol: string, index: number) => {
+    playback.stop();
+    setInsertionHistory(history => [...history, progression.state]);
+    progression.setState(state => insertProgression(state, symbol, index));
+    setExplorationOverride(null);
+    setPositionSelection(null);
+  };
+  const undoInsertion = () => {
+    const previous = insertionHistory.at(-1);
+    if (!previous) return;
+    playback.stop();
+    progression.setState(previous);
+    setInsertionHistory(history => history.slice(0, -1));
+    setExplorationOverride(null);
+    setPositionSelection(null);
+  };
+  const previewSuggestion = (suggestion: ContextualChordSuggestion) => {
+    playback.stop();
+    setExplorationOverride({ source: selectionSource, chord: suggestion.chord, suggestion: true });
+    setPositionSelection(null);
+    setPanelGuitarOpen(true);
+    setPanelPianoOpen(true);
+  };
+  const previewName = explorationOverride?.source === selectionSource && explorationOverride.suggestion ? explorationOverride.chord.name : undefined;
 
   // Handle chord play — voiced notes are computed fresh from current baseOctave
   const handlePlayChord = async (chord: ChordInfo, octaveOverride?: number) => {
@@ -782,6 +756,14 @@ function App() {
       />
 
       <main className="container">
+        <PwaControls />
+        <ProgressionAnalyzer compactMode={compactMode} input={progression.state.input} errors={progression.errors}
+          analysis={progression.analysis} pendingKey={progression.pendingKey} selectedIndex={previewName ? -1 : progression.state.selectedIndex}
+          onChange={changeProgression} onSelect={selectProgressionChord} playback={playback}
+          onChooseKey={key => { playback.stop(); progression.setState(state => ({ ...state, keyChoice: { tonic: key.tonic, mode: key.mode } })); }} />
+        {progression.analysis && <ProgressionSuggestions key={progression.state.input + progression.analysis.key.name}
+          suggestions={contextualSuggestions} variants={contextualVariants} playback={playback} previewName={previewName}
+          onPreview={previewSuggestion} onInsert={addProgressionChord} onUse={changeProgression} onUndo={undoInsertion} canUndo={insertionHistory.length > 0} />}
         {/* Scale notes and presets */}
         <CollapsiblePanel
           title="Escalas"
@@ -798,7 +780,8 @@ function App() {
                   id="notes-input"
                   type="text"
                   placeholder="Ej: C D E F G A B"
-                  value={rawInput}
+                  value={progression.detectedScale ? parsedNotes.join(" ") : rawInput}
+                  readOnly={!!progression.detectedScale}
                   onChange={(e) => setRawInput(e.target.value)}
                   aria-label="Notas de la escala en cifrado americano"
                 />
@@ -839,12 +822,13 @@ function App() {
                   <span>Nota raíz</span>
                   <select
                     value={scaleRoot}
+                    disabled={!!progression.detectedScale}
                     onChange={(event) =>
                       applyScalePreset(event.target.value, selectedScalePreset)
                     }
                     aria-label="Seleccionar nota raíz de la escala"
                   >
-                    {CHROMATIC_NOTES.map((note) => (
+                    {[...new Set([...CHROMATIC_NOTES, 'Db', 'Eb', 'Gb', 'Ab', 'Bb', scaleRoot].filter(Boolean))].map((note) => (
                       <option key={note} value={note}>{note}</option>
                     ))}
                   </select>
@@ -853,6 +837,7 @@ function App() {
                   <span>Tipo de escala</span>
                   <select
                     value={selectedScalePreset}
+                    disabled={!!progression.detectedScale}
                     onChange={(event) =>
                       applyScalePreset(scaleRoot || "C", event.target.value as ScalePresetId)
                     }
@@ -1080,6 +1065,7 @@ function App() {
           }}
         >
           {/* Chords List */}
+          {!progressionActive && (
           <CollapsiblePanel
             title="Acordes de la Escala"
             icon={<List size={20} className="text-purple-400" />}
@@ -1141,10 +1127,11 @@ function App() {
             )}
           </CollapsiblePanel>
 
+          )}
           {/* Chord visualizers */}
           {explorationChord ? (
             <>
-              {explorationChord && false && (
+              {panelDetailsOpen && !progressionActive && (
                 <CollapsiblePanel
                 title="Detalles del Acorde"
                 icon={<Music size={20} className="text-purple-400" />}
@@ -1185,7 +1172,7 @@ function App() {
                               ? "Dominante"
                               : explorationChord!.type === "unknown"
                                 ? "No estándar"
-                                : explorationChord!.type}
+                                : explorationChord!.type === "suspended" ? explorationChord!.suffix.toUpperCase() : explorationChord!.type}
                         </div>
                       </div>
                       <button
@@ -1208,7 +1195,7 @@ function App() {
                         </div>
                       </div>
                       <div className="breakdown-card">
-                        <div className="breakdown-label">Tercera</div>
+                        <div className="breakdown-label">{explorationChord!.type === "suspended" ? explorationChord!.suffix === "sus2" ? "Segunda" : "Cuarta" : "Tercera"}</div>
                         <div className="breakdown-value">
                           {explorationChord!.third}
                         </div>
@@ -1282,6 +1269,7 @@ function App() {
                         border: "none",
                       }}
                     >
+                      {previewName && <p className="suggestion-preview-label" role="status">Vista previa: {previewName} · sugerencia, todavía no pertenece a la progresión</p>}
                       <div
                         className="guitar-header-controls"
                         style={{
@@ -1403,12 +1391,14 @@ function App() {
               >
                 <div className="piano-split-view">
                   <section className="piano-chord-section">
+                    {previewName && <p className="suggestion-preview-label">Sugerencia · vista previa</p>}
                     <div className="piano-section-heading">
                       <span>Acorde</span>
                       <strong>{explorationChord?.name || "—"}</strong>
                     </div>
                     <PianoKeyboard
                       whiteKeys={CHORD_WHITE_KEYS}
+                      noteLabels={explorationChord.notes}
                       blackKeys={CHORD_BLACK_KEYS}
                       isActive={(note) =>
                         manuallyPressedKeys[note] ||
@@ -1433,6 +1423,7 @@ function App() {
                     </div>
                     <PianoKeyboard
                       whiteKeys={WHITE_KEYS}
+                      noteLabels={parsedNotes}
                       blackKeys={BLACK_KEYS}
                       isActive={isScaleKeyActive}
                       isRoot={isScaleKeyRoot}
@@ -1444,7 +1435,7 @@ function App() {
 
             </>
           ) : (
-            false && (
+            panelDetailsOpen && !progressionActive && (
               <CollapsiblePanel
               title="Detalles del Acorde"
               icon={<Music size={20} className="text-purple-400" />}

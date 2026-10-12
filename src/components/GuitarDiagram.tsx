@@ -1,5 +1,6 @@
 import React from 'react';
 import type { ChordPosition } from '../utils/guitarChords';
+import { pitchClass } from '../utils/noteSpelling';
 
 const OPEN_STRING_NOTES = [4, 11, 7, 2, 9, 4]; // e, B, G, D, A, E
 const CHORD_OPEN_STRING_NOTES = [4, 9, 2, 7, 11, 4]; // E, A, D, G, B, e
@@ -13,14 +14,8 @@ interface ScaleFretboardProps {
 }
 
 const noteToPitchClass = (note: string): number | null => {
-  const match = note.match(/^([A-G])(#|b)?$/);
-  if (!match) return null;
-
-  const naturalNotes: Record<string, number> = {
-    C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11,
-  };
-  const accidental = match[2] === '#' ? 1 : match[2] === 'b' ? -1 : 0;
-  return (naturalNotes[match[1]] + accidental + 12) % 12;
+  const value = pitchClass(note);
+  return value < 0 ? null : value;
 };
 
 export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({

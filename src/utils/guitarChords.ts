@@ -1,3 +1,5 @@
+import { pitchClass } from './noteSpelling';
+
 export type FretValue = number | 'X';
 
 export interface ChordPosition {
@@ -26,12 +28,7 @@ export const getGuitarVoicing = (pos: ChordPosition): string[] => {
 };
 
 export const noteToSemitone = (note: string): number => {
-  const match = note.match(/^([A-G])(#|b)?/);
-  if (!match) return 0;
-  let idx = PITCH_CLASSES.indexOf(match[1]);
-  if (match[2] === '#') idx += 1;
-  else if (match[2] === 'b') idx -= 1;
-  return (idx + 12) % 12;
+  return Math.max(0, pitchClass(note));
 };
 
 export const transposeNote = (note: string, semitones: number): string => {
@@ -112,6 +109,21 @@ const SHAPES: Record<string, ShapeDef[]> = {
 
 // Replace some with robust movable shapes for 6th and 5th string to ensure coverage
 const MOVABLE_SHAPES: Record<string, ShapeDef[]> = {
+  sus2: [
+    { frets: [0, 2, 4, 4, 0, 0], rootString: 0, shapeRootSemitone: 4 },
+    { frets: ['X', 0, 2, 2, 0, 0], rootString: 1, shapeRootSemitone: 9 },
+    { frets: ['X', 'X', 0, 2, 3, 0], rootString: 2, shapeRootSemitone: 2 },
+  ],
+  sus4: [
+    { frets: [0, 2, 2, 2, 0, 0], rootString: 0, shapeRootSemitone: 4 },
+    { frets: ['X', 0, 2, 2, 3, 0], rootString: 1, shapeRootSemitone: 9 },
+    { frets: ['X', 'X', 0, 2, 3, 3], rootString: 2, shapeRootSemitone: 2 },
+  ],
+  '7sus4': [
+    { frets: [0, 2, 0, 2, 0, 0], rootString: 0, shapeRootSemitone: 4 },
+    { frets: ['X', 0, 2, 0, 3, 0], rootString: 1, shapeRootSemitone: 9 },
+    { frets: ['X', 'X', 0, 2, 1, 3], rootString: 2, shapeRootSemitone: 2 },
+  ],
   'major': [
     { frets: [0, 2, 2, 1, 0, 0], rootString: 0, shapeRootSemitone: 4 },
     { frets: ['X', 0, 2, 2, 2, 0], rootString: 1, shapeRootSemitone: 9 },
@@ -136,28 +148,30 @@ const MOVABLE_SHAPES: Record<string, ShapeDef[]> = {
     { frets: ['X', 0, 2, 0, 2, 0], rootString: 1, shapeRootSemitone: 9 }
   ],
   'm7b5': [
-    { frets: [0, 'X', 0, 0, 1, 'X'], rootString: 0, shapeRootSemitone: 4 },
+    { frets: [0, 1, 0, 0, 3, 0], rootString: 0, shapeRootSemitone: 4 },
     { frets: ['X', 0, 1, 0, 1, 'X'], rootString: 1, shapeRootSemitone: 9 }
   ],
   'dim7': [
-    { frets: [0, 'X', 2, 0, 2, 0], rootString: 0, shapeRootSemitone: 4 },
-    { frets: ['X', 0, 1, 2, 1, 'X'], rootString: 1, shapeRootSemitone: 9 }
+    { frets: [0, 'X', 2, 3, 2, 3], rootString: 0, shapeRootSemitone: 4 },
+    { frets: ['X', 0, 1, 2, 1, 2], rootString: 1, shapeRootSemitone: 9 }
   ],
   'diminished': [
-    { frets: [0, 1, 2, 'X', 'X', 'X'], rootString: 0, shapeRootSemitone: 4 },
+    { frets: [0, 1, 2, 0, 'X', 'X'], rootString: 0, shapeRootSemitone: 4 },
     { frets: ['X', 0, 1, 2, 1, 'X'], rootString: 1, shapeRootSemitone: 9 }
   ]
 };
 
 export const getGuitarPositions = (rootNote: string, suffix: string, isSeventh: boolean): ChordPosition[] => {
   let typeKey: string | null = null;
-  if (isSeventh) {
+  if (['sus', 'sus4', 'sus2', '7sus4'].includes(suffix)) {
+    typeKey = suffix === 'sus' ? 'sus4' : suffix;
+  } else if (isSeventh) {
     if (suffix === 'maj7') typeKey = 'maj7';
     else if (suffix === '7') typeKey = '7';
     else if (suffix === 'm7') typeKey = 'm7';
     else if (suffix === 'minj7') typeKey = 'minj7';
     else if (suffix === 'maj7#5') typeKey = 'maj7#5';
-    else if (suffix === 'min7/b5') typeKey = 'm7b5';
+    else if (suffix === 'min7/b5' || suffix === 'm7b5') typeKey = 'm7b5';
     else if (suffix === 'dim7') typeKey = 'dim7';
   } else {
     if (suffix === '') typeKey = 'major';
@@ -189,6 +203,12 @@ export const getGuitarPositions = (rootNote: string, suffix: string, isSeventh: 
       const fretsNumeric = newFrets.filter(f => f !== 'X') as number[];
       if (fretsNumeric.length === 0) continue;
 
+      const intervals = typeKey === 'sus2' ? [0, 2, 7] : typeKey === 'sus4' ? [0, 5, 7] : typeKey === '7sus4' ? [0, 5, 7, 10] : null;
+      if (intervals) {
+        const played = new Set(getGuitarVoicing({ frets: newFrets, baseFret: 1 }).map(pitchClass));
+        const expected = intervals.map(i => (rootSemi + i) % 12);
+        if (played.size !== expected.length || !expected.every(n => played.has(n))) continue;
+      }
       const minFret = Math.min(...fretsNumeric);
       const maxFret = Math.max(...fretsNumeric);
 

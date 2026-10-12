@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ChordInfo } from '../App';
+import type { ChordInfo } from '../utils/chordTypes';
 
 interface ChordCardProps {
   chord: ChordInfo;
@@ -24,7 +24,7 @@ export const ChordCard: React.FC<ChordCardProps> = ({
     suspended: 'suspended',
     unknown: 'otro',
   };
-  const badgeLabel = badgeLabels[chord.type];
+  const badgeLabel = chord.type === 'suspended' ? (chord.suffix === 'sus' ? 'sus4' : chord.suffix).toUpperCase() : badgeLabels[chord.type];
   
   return (
     <div 

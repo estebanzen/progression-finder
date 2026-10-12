@@ -1,3 +1,5 @@
+import { pitchClass, spellScale } from './noteSpelling';
+
 export const CHROMATIC_NOTES = [
   "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
 ] as const;
@@ -51,9 +53,10 @@ export const generateScaleNotes = (
   root: string,
   presetId: ScalePresetId,
 ): string[] => {
-  const rootIndex = CHROMATIC_NOTES.indexOf(root as (typeof CHROMATIC_NOTES)[number]);
+  const rootIndex = pitchClass(root);
   const preset = SCALE_PRESETS.find((item) => item.id === presetId);
   if (rootIndex < 0 || !preset) return [];
+  if (preset.intervals.length === 7) return spellScale(root, preset.intervals);
   return preset.intervals.map(
     (interval) => CHROMATIC_NOTES[(rootIndex + interval) % 12],
   );

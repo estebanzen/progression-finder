@@ -1859,3 +1859,48 @@
     text-align: center;
   }
 }
+.progression-analyzer { display: grid; gap: 1rem; }
+.progression-analyzer input { width: 100%; box-sizing: border-box; padding: .85rem; background: var(--bg-dark, #161622); color: var(--text-main, #eee); border: 1px solid var(--border-color, #555); border-radius: .6rem; }
+.progression-analyzer p { line-height: 1.6; overflow-wrap: anywhere; }
+.analyzer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 1rem; }
+.progression-analyzer .chord-card { text-align: left; cursor: default; padding: 1rem; }
+.analyzer-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.progression-analyzer button { padding: .6rem .8rem; background: #34314b; color: #fff; border: 1px solid #77718d; border-radius: .5rem; cursor: pointer; }
+.progression-analyzer button:disabled { opacity: .5; cursor: default; }
+.progression-analyzer :is(button, input):focus-visible { outline: 2px solid #bba1ff; outline-offset: 3px; }
+.analyzer-alternative { padding: .7rem 0; }
+.pwa-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem; margin-bottom: 1rem; border: 1px solid #77718d; background: #1d192d; color: #eee; border-radius: .75rem; }
+.pwa-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.pwa-actions button { background: #34314b; color: white; padding: .6rem .8rem; border: 1px solid #77718d; border-radius: .5rem; cursor: pointer; }
+.pwa-actions button:focus-visible { outline: 2px solid #bba1ff; outline-offset: 3px; }
+.pwa-actions button:disabled { opacity: .5; }
+.progression-chords { margin-top: 1rem; }
+.progression-analyzer .progression-chord { display: flex; flex-direction: column; align-items: flex-start; gap: .65rem; padding: 1.2rem; min-height: 200px; background: rgba(35, 31, 53, .75); }
+.progression-analyzer .progression-chord.active { border-color: #bba1ff; box-shadow: 0 0 0 2px rgba(187, 161, 255, .3); }
+.progression-selection { font-size: .8rem; color: #cbb7ff; margin-top: auto; }
+.analyzer-degrees { font-weight: 700; font-size: 1.2rem; }
+.analyzer-summary { padding: 1rem; border-radius: .7rem; background: rgba(35, 31, 53, .5); }
+.analyzer-key-choice { border-left: 3px solid #bba1ff; padding-left: 1rem; }
+.progression-analyzer details summary { padding: .75rem; cursor: pointer; font-weight: 600; }
+.progression-analyzer details summary:focus-visible { outline: 2px solid #bba1ff; }
+.contextual-suggestions { margin-top: 1.5rem; margin-bottom: 1.5rem; }
+.recommendation-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
+.recommendation-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); margin: 1rem 0; }
+.contextual-suggestions .recommendation-card { display: flex; flex-direction: column; align-items: flex-start; gap: .6rem; text-align: left; padding: 1rem; }
+.recommendation-select { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; width: 100%; text-align: left; }
+.recommendation-select > span:last-child { font-size: .8rem; }
+.contextual-suggestions button, .contextual-suggestions select { background: #34314b; color: #fff; border: 1px solid #77718d; border-radius: .5rem; padding: .6rem .8rem; cursor: pointer; max-width: 100%; }
+.contextual-suggestions :is(button, select):focus-visible { outline: 2px solid #bba1ff; outline-offset: 3px; }
+.contextual-suggestions p { line-height: 1.5; overflow-wrap: anywhere; }
+.recommendation-category { font-size: .8rem; color: #b8b5c8; }
+.recommendation-confidence { display: inline-block; font-size: .8rem; padding: .3rem .55rem; border-radius: .4rem; background: #293c37; color: #b8f3d7; }
+.recommendation-confidence.experimental { background: #453525; color: #ffe1b7; }
+.recommendation-location { display: grid; gap: .4rem; width: 100%; }
+.recommendation-location select { width: 100%; }
+.recommendation-result { font-size: .85rem; }
+.recommendation-card .analyzer-actions { margin-top: auto; }
+.recommendation-card.active { outline: 2px solid #bba1ff; }
+.contextual-variants { margin-top: 1.5rem; }
+.contextual-variants .analyzer-alternative { padding: 1rem; background: rgba(35, 31, 53, .5); border-radius: .6rem; }
+.suggestion-preview-label { font-size: .85rem; color: #cbb7ff; }
+.guitar-view-container > .suggestion-preview-label { grid-column: 1 / -1; margin: 0 0 .5rem; }

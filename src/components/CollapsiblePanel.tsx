@@ -53,6 +53,8 @@ export const CollapsiblePanel: React.FC<CollapsiblePanelProps> = ({
           {headerControls && <div className="panel-header-controls">{headerControls}</div>}
           <button
             onClick={handleToggle}
+            aria-expanded={isOpen}
+            aria-label={`${isOpen ? 'Contraer' : 'Expandir'} ${title}`}
             className="panel-toggle-btn"
             style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)' }}
           >

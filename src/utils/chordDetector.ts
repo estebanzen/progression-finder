@@ -25,6 +25,7 @@ const CHORD_FORMULAS: readonly ChordFormula[] = [
   { intervals: [2, 7], suffix: 'sus2', quality: 'suspended', label: 'sus2' },
   { intervals: [5, 7], suffix: 'sus4', quality: 'suspended', label: 'sus4' },
 
+  { intervals: [5, 7, 10], suffix: '7sus4', quality: 'suspended', label: '7sus4' },
   { intervals: [4, 7, 11], suffix: 'maj7', quality: 'major', label: 'major 7' },
   { intervals: [4, 7, 10], suffix: '7', quality: 'dominant', label: 'dominant 7' },
   { intervals: [3, 7, 10], suffix: 'm7', quality: 'minor', label: 'minor 7' },

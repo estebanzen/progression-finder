@@ -4,7 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test": "tsx --test tests/progression.test.ts tests/contextualSuggestions.test.ts",
+    "test:pwa": "node --test scripts/pwa.test.mjs",
+    "test:e2e": "playwright test",
     "dev": "vite",
+    "prebuild": "node scripts/generate-pwa-icons.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "predeploy": "npm run build",
@@ -19,6 +23,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.0",
     "@types/node": "^24.12.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -28,8 +33,10 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "gh-pages": "^6.3.0",
     "globals": "^17.6.0",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vite-plugin-pwa": "^2.0.0"
   }
 }
