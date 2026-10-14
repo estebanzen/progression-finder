@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 
-export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T | ((val: T) => T)) => void] {
+export function useLocalStorage<T>(key: string, defaultValue: T, initialOverride?: T): [T, (value: T | ((val: T) => T)) => void] {
   // Use state initializer function to read from localStorage synchronously on first render
   const [storedValue, setStoredValue] = useState<T>(() => {
+    if (initialOverride !== undefined) return initialOverride;
     try {
       const item = window.localStorage.getItem(key);
       if (item !== null) {

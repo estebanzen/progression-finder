@@ -755,13 +755,14 @@ function App() {
         onOpenAudioSettings={() => setAudioModalOpen(true)}
       />
 
-      <main className="container">
+      <main className={`container ${compactMode ? "compact" : ""}`}>
         <PwaControls />
         <ProgressionAnalyzer compactMode={compactMode} input={progression.state.input} errors={progression.errors}
           analysis={progression.analysis} pendingKey={progression.pendingKey} selectedIndex={previewName ? -1 : progression.state.selectedIndex}
           onChange={changeProgression} onSelect={selectProgressionChord} playback={playback}
           onChooseKey={key => { playback.stop(); progression.setState(state => ({ ...state, keyChoice: { tonic: key.tonic, mode: key.mode } })); }} />
         {progression.analysis && <ProgressionSuggestions key={progression.state.input + progression.analysis.key.name}
+          compactMode={compactMode}
           suggestions={contextualSuggestions} variants={contextualVariants} playback={playback} previewName={previewName}
           onPreview={previewSuggestion} onInsert={addProgressionChord} onUse={changeProgression} onUndo={undoInsertion} canUndo={insertionHistory.length > 0} />}
         {/* Scale notes and presets */}
@@ -1060,8 +1061,7 @@ function App() {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "1.5rem",
-            marginTop: "1.5rem",
+            gap: compactMode ? "0.75rem" : "1rem",
           }}
         >
           {/* Chords List */}

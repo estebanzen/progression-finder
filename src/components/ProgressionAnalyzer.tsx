@@ -1,6 +1,7 @@
 import type { ProgressionAnalysis, Key } from '../utils/progressionAnalyzer';
 import type { ChordPlayback } from '../hooks/useChordPlayback';
 import { CollapsiblePanel } from './CollapsiblePanel';
+import { usePersistentPanelState } from '../hooks/usePersistentPanelState';
 
 interface Props {
   input: string; errors: string[]; analysis: ProgressionAnalysis | null; pendingKey: boolean; selectedIndex: number;
@@ -8,7 +9,8 @@ interface Props {
   playback: ChordPlayback; compactMode?: boolean;
 }
 export function ProgressionAnalyzer({ input, errors, analysis, pendingKey, selectedIndex, onChange, onSelect, onChooseKey, playback, compactMode }: Props) {
-  return <CollapsiblePanel title="Analizador de progresiones" defaultOpen compactMode={compactMode} onToggle={open => { if (!open) playback.stop(); }}>
+  const [isOpen, setIsOpen] = usePersistentPanelState('panel_progression_analyzer_open', true);
+  return <CollapsiblePanel title="Analizador de progresiones" isOpen={isOpen} compactMode={compactMode} onToggle={open => { setIsOpen(open); if (!open) playback.stop(); }}>
     <div className="progression-analyzer">
       <label htmlFor="progression-input">Progresión con símbolos de acordes</label>
       <input id="progression-input" value={input} placeholder="Ej: Gm C Fmaj7 D7" aria-describedby="progression-help progression-errors" aria-invalid={errors.length > 0} onChange={event => onChange(event.target.value)} />

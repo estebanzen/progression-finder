@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { CollapsiblePanel } from './CollapsiblePanel';
+import { usePersistentPanelState } from '../hooks/usePersistentPanelState';
 import type { ChordPlayback } from '../hooks/useChordPlayback';
 import type { ContextualChordSuggestion, ProposedProgression, InsertionLocation } from '../utils/contextualChordSuggestions';
 import { compatibilityLevel } from '../utils/contextualChordSuggestions';
 
 interface Props {
+  compactMode?: boolean;
   suggestions: ContextualChordSuggestion[];
   variants: ProposedProgression[];
   playback: ChordPlayback;
@@ -14,15 +17,15 @@ interface Props {
   onUndo: () => void;
   canUndo: boolean;
 }
-export function ProgressionSuggestions({ suggestions, variants, playback, previewName, onPreview, onInsert, onUse, onUndo, canUndo }: Props) {
+export function ProgressionSuggestions({ compactMode = false, suggestions, variants, playback, previewName, onPreview, onInsert, onUse, onUndo, canUndo }: Props) {
+  const [isOpen, setIsOpen] = usePersistentPanelState('panel_progression_suggestions_open', true);
   const [showAll, setShowAll] = useState(false);
   const [positions, setPositions] = useState<Record<string, number>>({});
   const visible = showAll ? suggestions : suggestions.slice(0, 6);
   const selectedLocation = (suggestion: ContextualChordSuggestion): InsertionLocation => suggestion.locations.find(location => location.insertIndex === positions[suggestion.chord.name]) ?? suggestion.locations[0];
-  return <section className="glass-panel contextual-suggestions" aria-labelledby="contextual-suggestions-title">
-    <div className="recommendation-heading"><h2 id="contextual-suggestions-title">Acordes que podés agregar</h2>
-      <div className="analyzer-actions">{canUndo && <button onClick={onUndo}>Deshacer inserción</button>}{playback.playing && <button onClick={playback.stop}>Detener reproducción</button>}</div>
-    </div>
+  return <CollapsiblePanel title="Acordes que podés agregar" className="contextual-suggestions" compactMode={compactMode} isOpen={isOpen}
+    onToggle={open => { setIsOpen(open); if (!open) playback.stop(); }}
+    headerControls={<div className="analyzer-actions">{canUndo && <button onClick={onUndo}>Deshacer inserción</button>}{playback.playing && <button onClick={playback.stop}>Detener reproducción</button>}</div>}>
     <p>Opciones ordenadas por compatibilidad con esta progresión. Elegí un acorde para verlo en guitarra y piano; escuchar no cambia la selección. La puntuación es orientativa y depende de la ubicación.</p>
     {playback.error && <p role="alert">{playback.error}</p>}
     <div id="contextual-recommendations" className="analyzer-grid recommendation-grid">{visible.map(suggestion => {
@@ -53,5 +56,5 @@ export function ProgressionSuggestions({ suggestions, variants, playback, previe
         <div className="analyzer-actions"><button onClick={() => void playback.play(variant.chords)}>Escuchar variante {index + 1}</button><button onClick={() => onUse(variant.chords.map(c => c.name).join(' '))}>Usar progresión {index + 1}</button></div>
       </article>)}</div>
     </section>
-  </section>;
+  </CollapsiblePanel>;
 }
